@@ -10,13 +10,13 @@ tags:
   - MinerU
 ---
 
-If you're building anything that ingests PDFs at scale — a RAG pipeline, a document indexer, a contracts assistant — you've probably hit the same wall I did:
+If you're building a RAG pipeline, a document indexer, or anything else that ingests PDFs at scale, you've probably hit the same wall I did:
 
 - **Hosted APIs are expensive** at high volume. Pennies per page becomes dollars per thousand becomes thousands per million.
 - **CPU parsers are slow.** I clocked Marker at **0.03 pages/sec** on a 32-thread workstation. That's ~30 hours per 5,000 pages.
-- **Renting a permanent GPU pod** is wasteful — you pay all night for a thing that processes documents in bursts.
+- **Renting a permanent GPU pod** is wasteful. You pay all night for a thing that processes documents in bursts.
 
-MinerU 2.5 is genuinely state-of-the-art for PDF → Markdown / JSON — see the [technical report on arxiv](https://arxiv.org/abs/2604.04771), the [opendatalab/MinerU repo](https://github.com/opendatalab/MinerU), and the [1.2B model card on HuggingFace](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B). The license relaxed to Apache 2.0. And RunPod's serverless platform scales to zero when nothing is calling. So the obvious move is: wire those two together.
+MinerU 2.5 is genuinely state-of-the-art for PDF → Markdown / JSON. See the [technical report on arxiv](https://arxiv.org/abs/2604.04771), the [opendatalab/MinerU repo](https://github.com/opendatalab/MinerU), and the [1.2B model card on HuggingFace](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B). The license relaxed to Apache 2.0 recently. RunPod's serverless platform scales to zero when nothing is calling. The obvious move is to wire those two together.
 
 Here's the [open-source repo I shipped](https://github.com/sergeyshmakov/runpod-mineru). MIT-licensed, ~30 files, takes about 10 minutes end-to-end.
 
@@ -35,7 +35,7 @@ The trick is **scale-to-zero**. RunPod bills per-second; when no one's calling, 
 
 ### 1. Get a RunPod account
 
-[Sign up here](https://runpod.io?ref=31jdfpnq). <small>Full disclosure: that's a referral link — costs you nothing extra, helps me keep maintaining the repo.</small> Add $5 of credit. That's enough for several million pages.
+[Sign up here](https://runpod.io?ref=31jdfpnq). <small>Full disclosure: that's a referral link. Costs you nothing extra, helps me keep maintaining the repo.</small> Add $5 of credit. That's enough for several million pages.
 
 ### 2. Fork the repo
 
@@ -44,7 +44,7 @@ gh repo fork sergeyshmakov/runpod-mineru --clone
 cd runpod-mineru
 ```
 
-The repo's small — `Dockerfile`, `handler.py`, a Python client library, three GitHub Actions workflows, and Hub metadata in `.runpod/`. No magic, no proprietary glue.
+The repo's small: `Dockerfile`, `handler.py`, a Python client library, three GitHub Actions workflows, and Hub metadata in `.runpod/`. No magic, no proprietary glue.
 
 ### 3. Wire RunPod's GitHub auto-build
 
@@ -60,7 +60,7 @@ The fastest path (no local Python needed) is right in the dashboard:
 
 - **Serverless → Endpoints → New**
 - Pick the template you just created
-- GPU pool: `AMPERE_24` (24 GB Ampere — 3090/A5000 class)
+- GPU pool: `AMPERE_24` (24 GB Ampere, 3090/A5000 class)
 - Workers min: `0`, max: `3`
 - Idle timeout: `10` seconds
 - FlashBoot: on
@@ -103,24 +103,24 @@ That's it. First job takes ~30–60 s because the worker is cold and downloads t
 
 MinerU returns three structured outputs:
 
-- **`<basename>.md`** — Markdown with headings, paragraphs, LaTeX equations (`$...$`), HTML tables, inline image references.
-- **`<basename>_content_list_v2.json`** — flat list of typed entries (`text`, `equation`, `table`, `image`, `code`), each with `page_idx`. Perfect for RAG chunking.
-- **`<basename>_middle.json`** — intermediate representation with full layout, bounding boxes per span, reading order. The thing you reach for when you need page coordinates.
+- **`<basename>.md`**: Markdown with headings, paragraphs, LaTeX equations (`$...$`), HTML tables, inline image references.
+- **`<basename>_content_list_v2.json`**: flat list of typed entries (`text`, `equation`, `table`, `image`, `code`), each with `page_idx`. Good fit for RAG chunking.
+- **`<basename>_middle.json`**: intermediate representation with full layout, bounding boxes per span, reading order. The thing you reach for when you need page coordinates.
 
 For a document indexer, you'd typically read `content_list_v2.json`, group entries by section using `level: "title"` boundaries, embed each chunk, and store with `page_idx` for citation back to the source.
 
 ## What worked, what surprised me
 
 - **The model loads once and stays warm.** With FlashBoot enabled, repeat calls land on a hot worker for free. My P50 cold start was 12 s, P95 was 28 s. Compare to ~60 s without FlashBoot.
-- **Inline base64 images** are easier than I expected — MinerU embeds them directly in the JSON, and the client decodes them on demand when it wants files on disk.
+- **Inline base64 images** are easier than I expected. MinerU embeds them directly in the JSON, and the client decodes them on demand when it wants files on disk.
 - **Multi-language is real.** I tested on a Japanese document and got clean Markdown with the tables preserved. 84 languages supported.
 - **The `idle_timeout=10s` is aggressive but works.** For spiky workloads (a user uploading 50 documents in a minute), the first parse pays a cold start, the next 49 are warm. For one-off requests every few minutes, you pay one cold start each time.
 
 ## What I'd watch out for
 
-- **Cost ceiling on long jobs.** A 5,000-page document is roughly **~18 min** at 5 p/s. Set `execution_timeout` accordingly — the repo defaults to 900 s (good for ~250 pages), bump it for full books.
+- **Cost ceiling on long jobs.** A 5,000-page document is roughly **~18 min** at 5 p/s. Set `execution_timeout` accordingly; the repo defaults to 900 s (good for ~250 pages), bump it for full books.
 - **PDF size for inline transport.** Inline base64 jobs cap around 10 MB. For bigger files, pass a `pdf_url` and let the worker fetch.
-- **Cold-start tax under low traffic.** If your usage pattern is "1 document every 30 minutes", scale-to-zero is wasted — you're always paying cold starts. Either bump `idle_timeout` or run `workers_min=1`.
+- **Cold-start tax under low traffic.** If your usage pattern is "1 document every 30 minutes", scale-to-zero is wasted; you're always paying cold starts. Either bump `idle_timeout` or run `workers_min=1`.
 
 ## Where to next
 
@@ -128,11 +128,11 @@ The repo I linked includes:
 
 - A typed Python client (`MineruClient`)
 - A `deploy.py` / `destroy.py` pair for endpoint lifecycle
-- A reference adapter pattern (`examples/parser_adapter_example.py`) showing how to wrap MinerU output into a domain model — useful if you're building a real product on top
+- A reference adapter pattern (`examples/parser_adapter_example.py`) showing how to wrap MinerU output into a domain model. Useful if you're building a real product on top.
 - Commitlint + semantic-release for automated CHANGELOG / GitHub Releases
 - 24 unit tests, CI on every PR
 
-I'm running it in production for a document indexer right now. If you build something on top, drop a note — I'm collecting use cases for the project README.
+I'm running it in production for a document indexer right now. If you build something on top, drop a note; I'm collecting use cases for the project README.
 
 ---
 
