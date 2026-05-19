@@ -1,3 +1,9 @@
+## [1.1.8](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.7...v1.1.8) (2026-05-19)
+
+### Bug Fixes
+
+* **client:** omit None end_page from payload; better error message fallback ([52dbc53](https://github.com/sergeyshmakov/runpod-mineru/commit/52dbc53ec3cf8499f16a157273f12f55477232c0))
+
 ## [1.1.7](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.6...v1.1.7) (2026-05-19)
 
 ### Bug Fixes
