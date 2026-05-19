@@ -1,0 +1,164 @@
+---
+title: Choosing a GPU
+description: When 24 GB is enough, when you need 48 GB, and when to switch backends. With concrete RunPod GPU pool IDs for each workload shape.
+---
+
+The repo's default GPU pool is `AMPERE_24` (24 GB Ampere — RTX 3090 / A5000 class). That's the right choice for most users, and the MinerU 2.5 1.2B VLM was specifically sized to fit comfortably in 24 GB with KV cache headroom. This page is for the cases when it isn't.
+
+## TL;DR
+
+| You are… | Use GPU pool | Why |
+|---|---|---|
+| Parsing small-to-medium docs (≤100 pages) one at a time | `AMPERE_24` or `ADA_24` | Default. 24 GB fits the model + sequential page KV cache with headroom. |
+| Doing concurrent batching inside a single worker | `AMPERE_48` or `ADA_48` | vLLM async engine can grow KV cache beyond 24 GB under batch pressure. |
+| Parsing large books (100–1,000 pages) | `AMPERE_48` | Headroom for dense layout / long reading-order context. |
+| Parsing huge documents (1,000+ pages) | `AMPERE_48` + `--backend pipeline` | Switch off vLLM KV-cache mode; pipeline backend processes page-by-page at ~6 GB. |
+
+If you're unsure, **start with the default `AMPERE_24` and watch for OOM in the worker logs**. Bumping to a 48 GB pool is a one-line change to `deploy.py --gpu-ids` or the `gpuIds` field in your endpoint config.
+
+## How much VRAM MinerU actually uses
+
+These numbers are approximate — pulled from MinerU's documented minimums plus community measurements on representative workloads. They give you a starting mental model, not a guarantee.
+
+| Layer | VRAM |
+|---|---|
+| Model weights | ~2.2 GB |
+| Peak activations | ~1.4 GB |
+| CUDA graph cache | ~0.4 GB |
+| **Model base footprint** | **~4 GB** |
+| vLLM KV cache (single page) | ~1–2 GB |
+| vLLM KV cache (concurrent pages, async batching) | grows with batch size |
+| OS + driver overhead | ~1 GB |
+| **Single-doc sequential peak (typical)** | **~8 GB** |
+| **Single-worker, async batching (small batch)** | **~11 GB** |
+| **Single-worker, async batching (heavy batch / large docs)** | **16+ GB** |
+
+The model itself is small — most of the VRAM cost is **KV cache**, which scales with how many pages the vLLM async engine has in flight at once. A single document processed sequentially stays under 10 GB indefinitely, regardless of the document's total length.
+
+## Why the MinerU paper used 48 GB
+
+The published benchmarks ran on dual RTX 4090 (effectively 48 GB combined) to **maximize throughput** for the leaderboard numbers — not because correctness requires it. If you're running a single document at a time in a serverless worker, you do not need 48 GB.
+
+## Workload-to-GPU map
+
+### Single worker, one doc at a time
+
+This is the default RunPod serverless shape: each incoming job spins a worker, the worker parses the document, the worker scales to zero after `idle_timeout`. No concurrency inside the worker.
+
+- **GPU pool**: `AMPERE_24` or `ADA_24` (24 GB)
+- **VRAM peak**: ~8 GB
+- **Backend**: `vlm-vllm-async-engine` (the default)
+
+### Single worker, batching multiple docs
+
+If you set `concurrencyModifier` > 1 on your endpoint so one worker handles several requests in parallel, the vLLM async engine batches their pages. KV cache grows linearly with batch size.
+
+- **GPU pool**: `ADA_24` for small batches (≤4 concurrent), `AMPERE_48` or `ADA_48` for larger
+- **VRAM peak**: 11–16 GB depending on batch size
+- **Trade-off**: higher throughput per worker; harder to bound max VRAM. Watch `nvidia-smi` in worker logs after deploy.
+
+### Multiple workers, one doc each (horizontal scaling)
+
+This is what RunPod does when you set `workers_max > 1` and several requests arrive at once. **Each worker is an isolated container with its own model copy** — VRAM is per-worker, not shared.
+
+- **GPU pool**: `AMPERE_24` per worker
+- **VRAM peak**: ~8 GB per worker
+- **Scaling note**: you pay per worker-second, so cost scales linearly. The default `workers_max: 3` in `hub.json` is a sensible cap for spiky workloads.
+
+### Multiple workers, batching inside each
+
+The high-throughput shape: `workers_max > 1` AND `concurrencyModifier > 1`. Each worker batches several pages internally while RunPod scales horizontally.
+
+- **GPU pool**: `AMPERE_48`
+- **VRAM peak**: 16+ GB per worker
+- **When to use**: high-volume production ingest where you've already validated the workload mix on 24 GB.
+
+## Document-size adjustments
+
+| Doc size | Pages | Recommended pool | Notes |
+|---|---|---|---|
+| Tiny | 1–3 | `AMPERE_24` | Smallest viable. L4 24 GB also fits if your endpoint targets the ADA family. |
+| Small | 3–30 | `AMPERE_24` | The "average document" case the defaults are tuned for. |
+| Medium | 30–100 | `ADA_24` (RTX 4090) | Faster than Ampere 24 GB for the same job; KV cache stays well under 16 GB. |
+| Large | 100–1,000 | `AMPERE_48` | More headroom for dense layouts. Sequential mode still uses ~10 GB, so 48 GB is safety margin. |
+| Huge | 1,000–10,000 | `AMPERE_48` + `--backend pipeline` | See next section. |
+
+## Switching to the pipeline backend
+
+For very long documents (1,000+ pages), MinerU's `pipeline` backend is the right tool. It trades raw speed for memory predictability:
+
+- **Pipeline backend**: page-by-page streaming, no vLLM KV cache accumulation, **~6 GB VRAM floor**, slower per-page but constant-memory.
+- **VLM backend** (default): vLLM async engine, faster per-page, KV cache grows under batch pressure.
+
+Switch by passing `backend: "pipeline"` in the job input:
+
+```json
+{
+  "input": {
+    "pdf_url": "https://example.com/full-book.pdf",
+    "backend": "pipeline",
+    "start_page": 0,
+    "end_page": 4999
+  }
+}
+```
+
+You don't need to change the endpoint or the GPU pool for this — it's per-job. The same worker can handle small docs with the VLM backend and large docs with the pipeline backend.
+
+## How to configure GPU pool
+
+Three places, in order of how you'd reach for them:
+
+### From `deploy.py`
+
+```powershell
+python deploy.py --template-id $env:MINERU_TEMPLATE_ID --gpu-ids AMPERE_48
+```
+
+Accepts a comma-separated list — RunPod picks the first available pool from the list at scale-up time:
+
+```powershell
+python deploy.py --template-id ... --gpu-ids "ADA_24,AMPERE_24,AMPERE_48"
+```
+
+### From the RunPod dashboard
+
+Endpoint detail page → **GPU configuration** → tick the pools you want. Same comma-separated semantics: RunPod tries the cheapest available pool that's allow-listed.
+
+### From `.runpod/hub.json`
+
+For published Hub templates, the `gpuIds` field declares the default pool list users will see when they deploy your template:
+
+```json
+{
+  "config": {
+    "gpuIds": "AMPERE_24,ADA_24,AMPERE_48,ADA_48",
+    ...
+  }
+}
+```
+
+This repo's default exposes both 24 GB and 48 GB tiers so users can opt up without re-publishing.
+
+## Cost implications
+
+GPU pricing on RunPod varies by pool, availability, and whether you're on spot vs on-demand. The repo's per-page math (~$0.0001 on a 24 GB Ampere at ~$0.44/h) assumes the default pool. For exact, current per-hour numbers, see [RunPod's pricing page](https://www.runpod.io/pricing).
+
+Rough relative cost, taking `AMPERE_24` as the baseline:
+
+| Pool | Relative $/hr | When it pays off |
+|---|---|---|
+| `AMPERE_24` | 1.0× | Default; the cost target. |
+| `ADA_24` (RTX 4090) | ~1.5–2× | ~30–50% faster per page; per-page cost roughly breaks even. |
+| `AMPERE_48` (A6000) | ~2.5–3× | Pays off when 24 GB OOMs under your workload. Don't pre-optimize. |
+| `AMPERE_80` (A100 80GB) | ~4× | Concurrent large-doc batching only; unjustified for sequential parsing. |
+
+## When to revisit this
+
+Watch your worker logs after deploy. The signals that mean you should bump up:
+
+- `CUDA out of memory` errors → bump to next VRAM tier
+- vLLM warning about KV cache eviction → larger pool or reduce concurrency
+- Per-page wall time spiking → check `nvidia-smi`; if at 100% memory but low utilisation, you're memory-bound
+
+Conversely, if your worker logs show consistent low VRAM usage (~6–8 GB peak) on a 48 GB pool, you're paying for headroom you don't need. Drop to 24 GB.

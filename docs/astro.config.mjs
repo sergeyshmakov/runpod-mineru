@@ -41,6 +41,10 @@ export default defineConfig({
 					label: "Getting Started",
 					items: ["getting-started/overview"],
 				},
+				{
+					label: "Guides",
+					items: ["guides/choosing-gpu"],
+				},
 			],
 			head: [
 				{
