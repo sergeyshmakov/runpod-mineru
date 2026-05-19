@@ -1,3 +1,14 @@
+## [1.1.4](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.3...v1.1.4) (2026-05-19)
+
+### Bug Fixes
+
+* **hub:** switch test GPU from RTX 4090 to RTX A5000 ([be7a262](https://github.com/sergeyshmakov/runpod-mineru/commit/be7a26223507ada4cf783904abd0969b09e1a90d))
+* **hub:** widen allowedCudaVersions to ease GPU supply constraints ([cc34711](https://github.com/sergeyshmakov/runpod-mineru/commit/cc347113f7b4d16a82bccdfe9f5c86e3452c6fad))
+
+### Documentation
+
+* update docs site styles ([75ced01](https://github.com/sergeyshmakov/runpod-mineru/commit/75ced01ee83212adcf4c854e4df23a7312facafe))
+
 ## [1.1.3](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.2...v1.1.3) (2026-05-19)
 
 ### Bug Fixes
