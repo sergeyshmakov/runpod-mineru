@@ -1,3 +1,10 @@
+## [1.1.7](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.6...v1.1.7) (2026-05-19)
+
+### Bug Fixes
+
+* **hub:** add test_input.json + switch pip to uv for faster builds ([561f7e7](https://github.com/sergeyshmakov/runpod-mineru/commit/561f7e7452c0419909c6faf638c318cef2a5f717))
+* **hub:** set MINERU_VL_MODEL_NAME so the local vlm backend loads Pro-2604 ([1abd2ba](https://github.com/sergeyshmakov/runpod-mineru/commit/1abd2ba4eedef5f70f81fd755d806b83ce32e608))
+
 ## [1.1.6](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.5...v1.1.6) (2026-05-19)
 
 ### Bug Fixes
