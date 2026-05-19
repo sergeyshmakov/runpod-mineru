@@ -128,7 +128,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default=DEFAULTS["gpu_ids"],
         help=(
             f"RunPod GPU pool (default: {DEFAULTS['gpu_ids']}). "
-            f"common options: AMPERE_16, AMPERE_24, AMPERE_48, ADA_24, ADA_48, HOPPER_80."
+            f"common options: AMPERE_16, AMPERE_24, AMPERE_48, AMPERE_80, ADA_24, ADA_48_PRO, ADA_80_PRO."
         ),
     )
     hw.add_argument(

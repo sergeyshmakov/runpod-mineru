@@ -10,7 +10,7 @@ The repo's default GPU pool is `AMPERE_24` (24 GB Ampere — RTX 3090 / A5000 cl
 | You are… | Use GPU pool | Why |
 |---|---|---|
 | Parsing small-to-medium docs (≤100 pages) one at a time | `AMPERE_24` or `ADA_24` | Default. 24 GB fits the model + sequential page KV cache with headroom. |
-| Doing concurrent batching inside a single worker | `AMPERE_48` or `ADA_48` | vLLM async engine can grow KV cache beyond 24 GB under batch pressure. |
+| Doing concurrent batching inside a single worker | `AMPERE_48` or `ADA_48_PRO` | vLLM async engine can grow KV cache beyond 24 GB under batch pressure. |
 | Parsing large books (100–1,000 pages) | `AMPERE_48` | Headroom for dense layout / long reading-order context. |
 | Parsing huge documents (1,000+ pages) | `AMPERE_48` + `--backend pipeline` | Switch off vLLM KV-cache mode; pipeline backend processes page-by-page at ~6 GB. |
 
@@ -53,7 +53,7 @@ This is the default RunPod serverless shape: each incoming job spins a worker, t
 
 If you set `concurrencyModifier` > 1 on your endpoint so one worker handles several requests in parallel, the vLLM async engine batches their pages. KV cache grows linearly with batch size.
 
-- **GPU pool**: `ADA_24` for small batches (≤4 concurrent), `AMPERE_48` or `ADA_48` for larger
+- **GPU pool**: `ADA_24` for small batches (≤4 concurrent), `AMPERE_48` or `ADA_48_PRO` for larger
 - **VRAM peak**: 11–16 GB depending on batch size
 - **Trade-off**: higher throughput per worker; harder to bound max VRAM. Watch `nvidia-smi` in worker logs after deploy.
 
@@ -132,7 +132,7 @@ For published Hub templates, the `gpuIds` field declares the default pool list u
 ```json
 {
   "config": {
-    "gpuIds": "AMPERE_24,ADA_24,AMPERE_48,ADA_48",
+    "gpuIds": "AMPERE_24,ADA_24,AMPERE_48,ADA_48_PRO",
     ...
   }
 }
