@@ -9,7 +9,7 @@ API contract (job input)
 ------------------------
 Exactly one of:
     pdf_url      : str           — public or presigned HTTP(S) URL
-    pdf_b64      : str           — base64-encoded PDF bytes (≤ 32 MB practical limit)
+    pdf_b64      : str           — base64-encoded PDF bytes (≤ 20 MB; RunPod gateway cap)
     volume_path  : str           — absolute path to a PDF inside the container
                                     (a mounted RunPod volume, or a file baked into the image)
 
@@ -80,7 +80,12 @@ except Exception as e:  # pragma: no cover — handler returns the error to call
     _MINERU_AVAILABLE = False
 
 
-MAX_INLINE_PDF_MB = 32
+# RunPod's gateway caps payloads at 10 MB (/run) and 20 MB (/runsync). The
+# 20 MB ceiling is the largest a caller can realistically send inline; the
+# handler enforces it defensively but oversized requests are normally
+# rejected at the gateway before reaching us. For larger files, use
+# pdf_url or volume_path.
+MAX_INLINE_PDF_MB = 20
 
 
 # -----------------------------------------------------------------------------

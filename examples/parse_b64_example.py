@@ -1,8 +1,8 @@
 """Minimal example: parse a local PDF by sending it inline as base64.
 
-Only practical for documents ≤ ~10 MB (the worker caps inline at 32 MB but
-RunPod's HTTP request size limit kicks in earlier). For larger files, use a
-URL or a mounted volume_path.
+Only practical for documents ≤ ~10 MB on /run and ~20 MB on /runsync —
+RunPod's gateway rejects bigger payloads. For larger files, use a URL or
+a mounted volume_path.
 
 Usage:
     set RUNPOD_API_KEY=...

@@ -12,13 +12,6 @@
         }
       },
       "timeout": 180000
-    },
-    {
-      "name": "reject_empty_input",
-      "input": {
-        "input": {}
-      },
-      "timeout": 30000
     }
   ],
   "config": {

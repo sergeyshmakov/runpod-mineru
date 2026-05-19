@@ -22,44 +22,6 @@
         "key": "TRANSFORMERS_OFFLINE",
         "value": "0"
       }
-    ],
-    "presets": [
-      {
-        "name": "spiky-workload-default",
-        "defaults": {
-          "idleTimeout": 10,
-          "workersMin": 0,
-          "workersMax": 3,
-          "flashboot": true,
-          "executionTimeoutMs": 900000,
-          "scalerType": "QUEUE_DELAY",
-          "scalerValue": 4
-        }
-      },
-      {
-        "name": "steady-throughput-indexer",
-        "defaults": {
-          "idleTimeout": 5,
-          "workersMin": 1,
-          "workersMax": 10,
-          "flashboot": true,
-          "executionTimeoutMs": 900000,
-          "scalerType": "QUEUE_DELAY",
-          "scalerValue": 2
-        }
-      },
-      {
-        "name": "long-single-jobs",
-        "defaults": {
-          "idleTimeout": 30,
-          "workersMin": 0,
-          "workersMax": 1,
-          "flashboot": true,
-          "executionTimeoutMs": 3600000,
-          "scalerType": "QUEUE_DELAY",
-          "scalerValue": 1
-        }
-      }
     ]
   }
 }
