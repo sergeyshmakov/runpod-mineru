@@ -1,3 +1,9 @@
+## [1.1.6](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.5...v1.1.6) (2026-05-19)
+
+### Bug Fixes
+
+* **hub:** use python3 instead of python in Dockerfile ([3b0e778](https://github.com/sergeyshmakov/runpod-mineru/commit/3b0e778aa1479e8779edd75e1ba660e6542cf321))
+
 ## [1.1.5](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.4...v1.1.5) (2026-05-19)
 
 ### Bug Fixes
