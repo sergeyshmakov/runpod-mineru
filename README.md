@@ -74,12 +74,14 @@ Parsing accuracy is MinerU's domain; their published [OmniDocBench](https://gith
 | Equations | ✅ LaTeX | ✅ LaTeX | ❌ | ✅ LaTeX |
 | Multi-lang | ✅ 84 langs | ⚠️ Latin-heavy | EN only | EN/limited |
 | Setup time | 5 min | 10 min | 30 min | 20 min |
-| License | Apache 2.0 + attribution\* | **GPL + Rail-M** | Apache 2.0 | MIT code + **CC-BY-NC weights** |
-| Commercial SaaS | ✅ free below thresholds\* | ⚠️ paid license needed | ✅ free | ❌ **blocked** (non-commercial weights) |
+| License | Apache 2.0 + attribution\* | **GPL-3.0 code + modified RAIL-M weights**\*\* | Apache 2.0 | MIT code + **CC-BY-NC weights** |
+| Commercial SaaS | ✅ free below thresholds\* | ❌ **blocked for competing services**\*\* | ✅ free | ❌ **blocked** (non-commercial weights) |
 
 <sub>\*MinerU 2.5 is Apache 2.0 with an addendum: free commercial use up to 100M MAU and $20M monthly revenue, with attribution required in UI/docs. See the [MinerU LICENSE](https://github.com/opendatalab/MinerU/blob/master/LICENSE.md).</sub>
 
-The license row is the load-bearing one for production SaaS. Marker's GPL + Rail-M combination requires open-sourcing your wrapper or buying a commercial license once you cross their revenue/funding thresholds. Nougat's model weights are CC-BY-NC 4.0, legally unusable for any paid product without a separate Meta agreement. GROBID is cleanly Apache 2.0 but is English-only and equations-blind. MinerU 2.5 is the only one of the four that's both commercially clean and GPU-class accurate.
+<sub>\*\*Marker's code is GPL-3.0; its OCR engine (Surya) ships under modified RAIL-M weights. RAIL-M's commercial clause bars use by any entity that "provides…any product or service that competes with…Licensor" — i.e. a competing PDF-parsing API/SaaS is barred regardless of company size or revenue. Datalab also ships Chandra (the model their hosted API runs) as a separate library under the same modified RAIL-M weights license. See [Surya MODEL_LICENSE](https://github.com/datalab-to/surya/blob/master/MODEL_LICENSE) and [Chandra MODEL_LICENSE](https://github.com/datalab-to/chandra/blob/master/MODEL_LICENSE).</sub>
+
+The license row is the load-bearing one for production SaaS. Marker's combination of GPL-3.0 code and RAIL-M weights blocks anyone building a competing PDF-extraction product, regardless of size; the RAIL-M competitor clause applies even to startups under the $2M revenue/funding thresholds. Nougat's model weights are CC-BY-NC 4.0, legally unusable for any paid product without a separate Meta agreement. GROBID is cleanly Apache 2.0 but is English-only and equations-blind. MinerU 2.5 is the only one of the four with both production-grade accuracy AND a license that permits competing commercial SaaS use.
 
 ## Documentation
 

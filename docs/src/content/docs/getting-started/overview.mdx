@@ -38,10 +38,12 @@ description: Architecture, what's in the repo, supported workloads, and how it c
 | Tables | ✅ structured | ⚠️ noisy | ⚠️ refs only | ⚠️ |
 | Equations | ✅ LaTeX | ✅ LaTeX | ❌ | ✅ LaTeX |
 | Multi-lang | ✅ 84 | ⚠️ Latin-heavy | EN only | EN/limited |
-| License | Apache 2.0 + thresholds | **GPL + Rail-M** | Apache 2.0 | MIT code, **CC-BY-NC weights** |
-| Commercial SaaS | ✅ | ⚠️ paid license | ✅ | ❌ blocked |
+| License | Apache 2.0 + thresholds | **GPL-3.0 code + RAIL-M weights** | Apache 2.0 | MIT code, **CC-BY-NC weights** |
+| Commercial SaaS | ✅ | ❌ blocked for competing services | ✅ | ❌ blocked |
 
-See the [project README](https://github.com/sergeyshmakov/runpod-mineru#how-does-it-compare) for the source-cited version of this table.
+Marker uses Surya as its in-process OCR/layout engine; Surya's weights ship under modified RAIL-M, whose commercial clause bars use by any entity offering a competing PDF-parsing product, regardless of revenue or company size. Datalab's newer Chandra model (what their hosted API runs) carries the same restriction.
+
+See the [project README](https://github.com/sergeyshmakov/runpod-mineru#how-does-it-compare) for the fully source-cited version of this comparison.
 
 ## Next steps
 
