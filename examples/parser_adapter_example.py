@@ -1,10 +1,10 @@
 """Reference adapter showing how to wrap MineruClient in a domain-typed
-"ParserAdapter" interface, of the sort a scientific-paper indexer (or any
+"ParserAdapter" interface, of the sort a document indexer (or any
 RAG/context system) would use internally.
 
-The intended SciContext shape:
+A typical shape in a downstream project:
 
-    services/parsers/src/scicontext_parsers/
+    services/parsers/src/your_parsers/
         adapter.py             # the ParserAdapter ABC below
         adapters/mineru.py     # the MineruParserAdapter below
         normalize.py           # the _to_parsed_document helpers below
@@ -17,17 +17,17 @@ What it demonstrates
 --------------------
 1. A typed `ParsedDocument` with sections + chunks + page provenance.
 2. An abstract `ParserAdapter` interface that different backends can implement
-   (MinerU today, GROBID / JATS pass-through / Marker tomorrow).
+   (MinerU today, another parser tomorrow).
 3. A concrete `MineruParserAdapter` that calls `MineruClient.parse_pdf()` and
    converts MinerU's `content_list_v2.json` entries into the domain model.
-4. Title-vs-paragraph classification, section nesting, and "section-aware
-   chunking" lined up with the SciContext architecture doc.
+4. Title-vs-paragraph classification, section nesting, and section-aware
+   chunking.
 
 Run it with a small public PDF to smoke-test:
 
     set RUNPOD_API_KEY=...
     set RUNPOD_ENDPOINT_ID=...
-    python examples/parser_adapter_example.py https://arxiv.org/pdf/2401.00000.pdf
+    python examples/parser_adapter_example.py https://example.com/report.pdf
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ ChunkType = Literal["text", "title", "table", "equation", "image", "code"]
 @dataclasses.dataclass(frozen=True)
 class Chunk:
     """One atomic unit of retrievable content, with provenance."""
-    chunk_id: str               # e.g. f"{paper_id}-{ordinal:05d}"
+    chunk_id: str               # e.g. f"{doc_id}-{ordinal:05d}"
     section_path: tuple[str, ...]   # e.g. ("Results", "Statistical methods")
     chunk_type: ChunkType
     text: str                   # plain text (or markdown for tables/equations)
@@ -91,7 +91,7 @@ class ParsedDocument:
 
 @dataclasses.dataclass(frozen=True)
 class Artifact:
-    """Whatever the calling system tracks per paper: the actual bytes to parse,
+    """Whatever the calling system tracks per document: the actual bytes to parse,
     plus identity / language hints. The adapter doesn't need to know how the
     artifact was obtained or where it's stored."""
     artifact_id: str            # opaque to the adapter; used to namespace chunk ids
@@ -102,7 +102,7 @@ class Artifact:
 
 
 class ParserAdapter(ABC):
-    """One implementation per parsing backend (mineru, grobid, jats, …)."""
+    """One implementation per parsing backend (mineru, others, …)."""
 
     @abstractmethod
     def parse(self, artifact: Artifact) -> ParsedDocument: ...
@@ -258,7 +258,7 @@ def _main() -> int:
         api_key=os.environ["RUNPOD_API_KEY"],
     )
     parsed = adapter.parse(Artifact(
-        artifact_id="example-paper",
+        artifact_id="example-doc",
         presigned_url=sys.argv[1],
         lang="en",
     ))

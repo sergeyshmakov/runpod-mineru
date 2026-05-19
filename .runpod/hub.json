@@ -3,7 +3,9 @@
   "description": "Serverless PDF → Markdown / JSON conversion via MinerU 2.5 (1.2B VLM). Scales to zero with a 10 s idle window, ~$0.0001 per page on AMPERE_24. Three input transports (URL / base64 / mounted volume), two output formats (gzipped tarball / inline). Generic — meant to be a reusable PDF-parsing primitive for RAG and document-context systems.",
   "type": "serverless",
   "category": "language",
-  "iconUrl": "",
+  "iconUrl": "https://raw.githubusercontent.com/sergeyshmakov/runpod-mineru/main/.runpod/icon.png",
+  "repository": "https://github.com/sergeyshmakov/runpod-mineru",
+  "license": "MIT",
   "config": {
     "runsOn": "GPU",
     "containerDiskInGb": 30,

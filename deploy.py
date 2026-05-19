@@ -1,12 +1,12 @@
 """Create a runpod-mineru serverless endpoint.
 
 Reads RUNPOD_API_KEY from environment or .env. Every endpoint knob is exposed
-as a CLI flag so the same script works for the ECMA experiment, SciContext,
-and any other consumer with different scaling/cost trade-offs.
+as a CLI flag so the same script works for any consumer with different
+scaling/cost trade-offs.
 
 Quick recipes
 -------------
-Fast spiky workload (papers arriving sporadically, latency matters):
+Fast spiky workload (documents arriving sporadically, latency matters):
     python deploy.py --template-id $TID --idle-timeout 10 --workers-min 0 \\
                      --flashboot --gpu-ids AMPERE_24
 

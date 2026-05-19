@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: MinerU parsing-accuracy issues
+    url: https://github.com/opendatalab/MinerU/issues
+    about: Output looks wrong, missed a table, equation rendered oddly? The model lives upstream.
+  - name: RunPod platform issues
+    url: https://www.runpod.io/contact
+    about: Endpoint behaviour, billing, cold-start performance, FlashBoot, GPU availability.
+  - name: vLLM / CUDA issues
+    url: https://github.com/vllm-project/vllm/issues
+    about: Inference engine errors, CUDA mismatches, vLLM crashes.
+  - name: Discussions
+    url: https://github.com/sergeyshmakov/runpod-mineru/discussions
+    about: Open-ended questions, deploy tips, integration ideas, show-and-tell.

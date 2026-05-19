@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an improvement to the worker, client, or deploy story.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before suggesting a feature, please check the scope:
+
+        - **In scope**: handler API changes, client ergonomics, deploy/destroy helpers, Dockerfile improvements, CI / release tooling, documentation.
+        - **Out of scope**: parsing accuracy / output quality (those belong upstream at [opendatalab/MinerU](https://github.com/opendatalab/MinerU/issues)).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the pain point, not the solution.
+      placeholder: "When I do X, Y happens, but I want Z."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Optional. What shape would the fix take?
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Other tools, workarounds, or different shapes.

@@ -1,18 +1,16 @@
 # runpod-mineru
 
 <!-- badges: ci, license, python, runpod -->
-[![CI](https://github.com/OWNER/runpod-mineru/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/runpod-mineru/actions/workflows/ci.yml)
+[![CI](https://github.com/sergeyshmakov/runpod-mineru/actions/workflows/ci.yml/badge.svg)](https://github.com/sergeyshmakov/runpod-mineru/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](pyproject.toml)
 [![MinerU](https://img.shields.io/badge/MinerU-2.5-purple)](https://github.com/opendatalab/MinerU)
-[![Deploy on RunPod](https://img.shields.io/badge/Deploy-RunPod-7c3aed?logo=runpod&logoColor=white)](https://www.runpod.io/console/hub?ref=YOUR_RUNPOD_REFERRAL_CODE)
+[![Deploy on RunPod](https://img.shields.io/badge/Deploy-RunPod-7c3aed?logo=runpod&logoColor=white)](https://runpod.io?ref=31jdfpnq)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-fa6673.svg)](https://www.conventionalcommits.org/)
 
-> Replace `OWNER` and `YOUR_RUNPOD_REFERRAL_CODE` with real values before publishing.
+Generic, reusable [MinerU 2.5](https://github.com/opendatalab/MinerU) PDF-parsing service running on [RunPod Serverless](https://runpod.io?ref=31jdfpnq). **Scales to zero**, idles in seconds, **costs cents per document**.
 
-Generic, reusable [MinerU 2.5](https://github.com/opendatalab/MinerU) PDF-parsing service running on [RunPod Serverless](https://www.runpod.io/serverless?ref=YOUR_RUNPOD_REFERRAL_CODE). **Scales to zero**, idles in seconds, **costs cents per document**.
-
-This repo intentionally knows nothing about any specific project. Callers (a research-paper indexer, a documents pipeline, anything that needs PDF → structured Markdown/JSON) just `pip install` the client package and submit jobs.
+This repo intentionally knows nothing about any specific project. Callers (a document indexer, a RAG pipeline, anything that needs PDF → structured Markdown/JSON) just `pip install` the client package and submit jobs.
 
 ## 30-second taste
 
@@ -20,26 +18,26 @@ This repo intentionally knows nothing about any specific project. Callers (a res
 from mineru_client import MineruClient
 
 client = MineruClient(endpoint_id="<your-endpoint-id>")
-result = client.parse_pdf(pdf_url="https://arxiv.org/pdf/2401.00000.pdf", end_page=4)
-client.save_tarball(result, "./out/paper")
+result = client.parse_pdf(pdf_url="https://example.com/report.pdf", end_page=4)
+client.save_tarball(result, "./out/doc")
 # → markdown + content_list + middle.json + images
 ```
 
 ## Why this exists
 
-- **MinerU 2.5** is SOTA for PDF → structured Markdown/JSON (charts, tables, math, multi-language). Apache 2.0 licensed.
-- **RunPod Serverless** bills per-second and **scales to zero**. With `idle_timeout=10` and FlashBoot, a 100-page paper costs roughly **$0.01** instead of paying for an always-on GPU.
+- **MinerU 2.5** is SOTA for PDF → structured Markdown/JSON (charts, tables, math, multi-language). Apache 2.0 licensed. See the [paper](https://arxiv.org/abs/2604.04771), [repo](https://github.com/opendatalab/MinerU), and [model card on HuggingFace](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B).
+- **RunPod Serverless** bills per-second and **scales to zero**. With `idle_timeout=10` and FlashBoot, a 100-page document costs roughly **$0.01** instead of paying for an always-on GPU.
 - **You don't have to wire any of that together yourself.** Push this repo to GitHub → RunPod auto-builds → endpoint id in your `.env` → done.
 
 ## Use cases this is built for
 
 | Use case | Why MinerU + serverless fits |
 |---|---|
-| **Scientific paper indexing** (RAG, search, citations) | Spiky ingest, pay only during bursts; preserves equations + tables |
+| **Office document indexing** (Word / PowerPoint / Excel exported to PDF) | Spiky ingest, pay only during bursts; preserves tables + figures |
 | **Document RAG pipelines** | Section-aware chunks with page provenance out of the box |
 | **Contract / spec / standards parsing** | Handles long attribute tables and cross-page constructs |
 | **Invoice / receipt extraction** | Table fidelity + image extraction in one pass |
-| **Multi-language documents** | MinerU 2.5 supports 40+ languages, including handwriting |
+| **Multi-language documents** | MinerU 2.5 supports 84 languages, including handwriting |
 
 ## Architecture
 
@@ -125,7 +123,7 @@ python deploy.py --image yourhandle/runpod-mineru:0.1
 
 | Setting | Value | Why |
 |---|---|---|
-| `gpu_ids` | `AMPERE_24` | 24 GB A5000 / 3090 class — fits MinerU 2.5 1.2B VLM comfortably with KV cache |
+| `gpu_ids` | `AMPERE_24` | 24 GB A5000 / 3090 class — fits the [MinerU 2.5 1.2B VLM](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B) comfortably with KV cache |
 | `idle_timeout` | `10 s` | Scale workers to zero after 10 s of inactivity |
 | `workers_min` | `0` | Pay only when processing |
 | `workers_max` | `3` | Concurrency cap; bump for production |
@@ -170,24 +168,24 @@ client = MineruClient(
 
 # Parse pages 0-99 of an externally hosted PDF, get a tarball back
 result = client.parse_pdf(
-    pdf_url="https://example.com/paper.pdf",
+    pdf_url="https://example.com/report.pdf",
     start_page=0,
     end_page=99,
 )
-client.save_tarball(result, dest_dir="./out/paper")
+client.save_tarball(result, dest_dir="./out/doc")
 
 # Or parse a small local file inline
 result = MineruClient.parse_pdf_from_file(
     client,
-    "small_paper.pdf",
+    "small_doc.pdf",
     return_format="inline",
 )
-client.save_inline(result, "./out/small_paper", basename="small_paper")
+client.save_inline(result, "./out/small_doc", basename="small_doc")
 ```
 
 ### Wrapping in a domain-specific adapter
 
-For systems that need their own typed domain model (sections, chunks, provenance) — e.g. a scientific-paper indexer — see [`examples/parser_adapter_example.py`](examples/parser_adapter_example.py). It shows the pattern: a `ParserAdapter` ABC, a `MineruParserAdapter` implementation that wraps `MineruClient`, and a `_to_parsed_document` step that converts MinerU's `content_list` into Pydantic-typed sections + chunks with page provenance preserved. Copy and specialize.
+For systems that need their own typed domain model (sections, chunks, provenance) — e.g. a document indexer — see [`examples/parser_adapter_example.py`](examples/parser_adapter_example.py). It shows the pattern: a `ParserAdapter` ABC, a `MineruParserAdapter` implementation that wraps `MineruClient`, and a `_to_parsed_document` step that converts MinerU's `content_list` into Pydantic-typed sections + chunks with page provenance preserved. Copy and specialize.
 
 `examples/` also has runnable smoke tests for URL and base64 flows.
 
@@ -197,13 +195,40 @@ For systems that need their own typed domain model (sections, chunks, provenance
 - Per-page on `AMPERE_24`: **~0.2 s** (≈ 5 pages/s)
 - ~$0.0001 per page on AMPERE_24 at $0.44/h. A 5,000-page doc ≈ **$0.10–0.25**.
 
+## Benchmarks
+
+Parsing accuracy is MinerU's domain — their published [OmniDocBench](https://github.com/opendatalab/OmniDocBench) leaderboard puts the 1.2B VLM ahead of much larger general-purpose models on text, formula, table, and reading-order metrics:
+
+[![MinerU 2.5 leaderboard](https://hotelll.github.io/MinerU2.5-Pro/leaderboard.png)](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B)
+
+<sub>Source: [MinerU2.5-Pro-2604-1.2B model card on HuggingFace](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B) and the [MinerU 2.5 technical report](https://arxiv.org/abs/2604.04771).</sub>
+
+What this repo adds on top is **deployment economics**: per-page cost on a scale-to-zero RunPod worker lands at roughly **$0.0001** at ~5 pages/sec on `AMPERE_24`, vs. an always-on GPU pod that bills 24/7 whether you're parsing or not. For comparison, CPU-only parsers on a 32-thread workstation run at roughly **0.03 pages/sec** — a 200-page document takes ~110 minutes vs ~45 seconds on a $0.44/h GPU.
+
+## How does it compare?
+
+| | runpod-mineru (this) | Marker | GROBID | Nougat |
+|---|---|---|---|---|
+| Scale-to-zero | ✅ | ⚠️ possible via serverless | ❌ (always-on) | ❌ |
+| GPU support | GPU only | CPU or GPU | CPU | GPU required |
+| Tables | ✅ structured | ⚠️ noisy | ⚠️ refs only | ⚠️ |
+| Equations | ✅ LaTeX | ✅ LaTeX | ❌ | ✅ LaTeX |
+| Multi-lang | ✅ 84 langs | ⚠️ Latin-heavy | EN only | EN/limited |
+| Setup time | 5 min | 10 min | 30 min | 20 min |
+| License | Apache 2.0 + attribution\* | **GPL + Rail-M** | Apache 2.0 | MIT code + **CC-BY-NC weights** |
+| Commercial SaaS | ✅ free below thresholds\* | ⚠️ paid license needed | ✅ free | ❌ **blocked** (non-commercial weights) |
+
+<sub>\*MinerU 2.5 is Apache 2.0 with an addendum: free commercial use up to 100M MAU and $20M monthly revenue, with attribution required in UI/docs. See the [MinerU LICENSE](https://github.com/opendatalab/MinerU/blob/master/LICENSE.md) for the exact terms.</sub>
+
+The license row is the load-bearing one for production SaaS. Marker's GPL + Rail-M combination requires open-sourcing your wrapper or buying a commercial license once you cross their revenue/funding thresholds. Nougat's model weights are CC-BY-NC 4.0, which makes it legally unusable for any paid product without a separate Meta agreement. GROBID is cleanly Apache 2.0 but is English-only and equations-blind. MinerU 2.5 is the only one of the four that's both commercially clean and GPU-class accurate.
+
 ## Local development
 
 Worker container is GPU-only; you can't fully test the handler on a CPU box. For client-side iteration:
 
 ```powershell
 pip install -e .[deploy]
-python examples/parse_url_example.py https://arxiv.org/pdf/2401.00000.pdf
+python examples/parse_url_example.py https://example.com/report.pdf
 ```
 
 The MinerU container itself rebuilds with `docker build -t runpod-mineru:dev .` if you have a CUDA box handy for smoke tests.
@@ -211,6 +236,19 @@ The MinerU container itself rebuilds with `docker build -t runpod-mineru:dev .` 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — commitlint enforces this in CI and `CHANGELOG.md` is generated automatically by semantic-release on push to `main`.
+
+## Discoverability — GitHub topics to add
+
+After pushing the repo, add these topics in **Settings → General → Topics** so it shows up in the right GitHub search pages:
+
+```
+mineru  pdf-parsing  runpod  serverless  document-ai  pdf-to-markdown
+vllm  rag  ocr  vlm  pdf-extraction  office-documents
+```
+
+## Support this project
+
+If this saves you time, the cheapest way to support development is to **sign up for RunPod through [this link](https://runpod.io?ref=31jdfpnq)** — it costs you nothing extra and lets the maintainer keep iterating.
 
 ## License
 

@@ -3,7 +3,7 @@
 Usage:
     set RUNPOD_API_KEY=...
     set RUNPOD_ENDPOINT_ID=...
-    python examples/parse_url_example.py https://example.com/paper.pdf
+    python examples/parse_url_example.py https://example.com/report.pdf
 """
 
 from __future__ import annotations

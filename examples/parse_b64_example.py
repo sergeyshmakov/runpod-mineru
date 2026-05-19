@@ -7,7 +7,7 @@ URL or a mounted volume_path.
 Usage:
     set RUNPOD_API_KEY=...
     set RUNPOD_ENDPOINT_ID=...
-    python examples/parse_b64_example.py path/to/small_paper.pdf
+    python examples/parse_b64_example.py path/to/small_doc.pdf
 """
 
 from __future__ import annotations

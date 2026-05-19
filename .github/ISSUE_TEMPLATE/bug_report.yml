@@ -1,0 +1,65 @@
+name: Bug report
+description: Something is wrong with the worker, client, or deployment.
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Before submitting, please check:
+
+        - **Parsing accuracy issues** → file at [opendatalab/MinerU](https://github.com/opendatalab/MinerU/issues) instead.
+        - **RunPod platform issues** (endpoint won't scale, FlashBoot misbehaves, cold start too long) → [RunPod support](https://www.runpod.io/contact).
+        - **vLLM / CUDA issues** → [vLLM upstream](https://github.com/vllm-project/vllm/issues).
+
+        Everything else — handler bugs, client bugs, deployment glitches — belongs here.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the unexpected behaviour.
+      placeholder: "I ran ... and got ... but expected ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Minimal steps to reproduce. Include the exact `parse_pdf(...)` call or job input.
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: handler-response
+    attributes:
+      label: Handler response
+      description: |
+        The full response from `MineruClient.parse_pdf(...)` (or the RunPod job
+        output). Especially the `error` and `traceback` fields if `ok: false`.
+      render: json
+
+  - type: input
+    id: mineru-version
+    attributes:
+      label: MinerU version (from handler response)
+      placeholder: "2.5.x"
+
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU pool the endpoint runs on
+      placeholder: "AMPERE_24"
+
+  - type: input
+    id: endpoint-id
+    attributes:
+      label: Endpoint id (last 6 chars are enough for log correlation)
+      placeholder: "...abc123"
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else?
+      description: Logs, RunPod dashboard screenshots, what you tried, what worked / didn't.
