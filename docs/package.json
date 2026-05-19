@@ -7,6 +7,7 @@
 		"dev": "astro dev",
 		"start": "astro dev",
 		"build": "astro build",
+		"postbuild": "node scripts/postbuild-rss.mjs",
 		"preview": "astro preview",
 		"astro": "astro"
 	},
