@@ -1,3 +1,10 @@
+## [1.1.11](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.10...v1.1.11) (2026-05-20)
+
+### Bug Fixes
+
+* **worker:** bake both MinerU models into image at build time ([fcbff51](https://github.com/sergeyshmakov/runpod-mineru/commit/fcbff513c76e54901d4f5ff7eee7a006ac1d6768))
+* **worker:** symlink lowercase Cached Models dir to canonical HF case at startup ([da5ebb4](https://github.com/sergeyshmakov/runpod-mineru/commit/da5ebb488a04e956c4ac16f69b1cb6f2a709ee9b))
+
 ## [1.1.10](https://github.com/sergeyshmakov/runpod-mineru/compare/v1.1.9...v1.1.10) (2026-05-20)
 
 ### Internal
