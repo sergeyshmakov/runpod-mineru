@@ -12,7 +12,7 @@ When something doesn't work, the worker tries hard to fail loudly. Every respons
   "debug": {
     "backend": "vlm-auto-engine",
     "input_format": "pdf",
-    "model_dir": "/runpod-volume/huggingface-cache/hub/models--opendatalab--MinerU2.5-Pro-2604-1.2B/snapshots/<hash>",
+    "model_dir": "/root/.cache/huggingface/hub/models--opendatalab--MinerU2.5-Pro-2604-1.2B/snapshots/<hash>",
     "gpu": {
       "available": true,
       "name": "NVIDIA RTX 4090",
@@ -34,7 +34,7 @@ What to look at:
 |---|---|
 | `backend` | The string passed to MinerU. If you set `pipeline` but see `vlm-auto-engine`, your caller isn't sending what you think it is |
 | `input_format` | Auto-detected from bytes. If you uploaded a PDF and see `unknown`, your transport returned an error page (HTML), not the file body |
-| `model_dir` | Filesystem path of the snapshot that actually loaded. `null` here on a 'pipeline' job is fine (pipeline doesn't load a VLM); `null` on a 'vlm-*' job means MinerU didn't cache the model — usually a Cached Models misconfig |
+| `model_dir` | Filesystem path of the snapshot that actually loaded. Both VLM and pipeline models are baked into the image at `/root/.cache/huggingface/`; if this is `null` on a successful job, the image build skipped the model bake step (unusual — file a bug) |
 | `gpu.compute_capability` | 8.6 = Ampere (3090, A5000, A6000), 8.9 = Ada (4090, RTX 6000 Ada), 9.0 = Hopper (H100), 12.0 = **Blackwell — VLM will crash** |
 | `phase_ms.fetch_input` | If hundreds of seconds on a `file_url` job, the source URL is slow / failing |
 | `phase_ms.mineru_parse` | Per-page guidance: ~0.5 s for VLM, ~3–5 s for pipeline. If 10× expected, you're memory-bound and vLLM is swapping |

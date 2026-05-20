@@ -7,44 +7,31 @@
 # At runtime: handler.py listens for RunPod jobs, downloads/decodes the input
 # PDF, calls MinerU's async parse, and returns the result as a base64 tarball.
 #
-# Model weights live on RunPod's per-endpoint Cached Models volume mounted
-# under /runpod-volume/huggingface-cache (matches the path RunPod's tutorial
-# at docs.runpod.io/tutorials/serverless/model-caching-text uses). Snapshot
-# layout is the HuggingFace standard:
-#   /runpod-volume/huggingface-cache/hub/models--{org}--{name}/snapshots/...
-#
-# To use this template effectively:
-#   1. In the RunPod endpoint dashboard, enable "Cached Models"
-#   2. Add `opendatalab/MinerU2.5-Pro-2604-1.2B` for the VLM backend
-#   3. (Optional) Add pipeline models if you use the `pipeline` backend
-#
-# First cold start populates the cache (non-billable); subsequent starts
-# read weights directly from the volume. Image stays ~2.5 GB smaller than
-# the previous bake-in approach.
+# Model weights are baked into the image at build time (under HF's default
+# cache at /root/.cache/huggingface). This is the community pattern for
+# fixed multi-model workers (worker-comfyui, worker-faster_whisper,
+# runpod-worker-real-esrgan all do the same). RunPod's Cached Models
+# dashboard feature only supports one model per endpoint, and MinerU needs
+# two: the VLM (opendatalab/MinerU2.5-Pro-2604-1.2B) and the pipeline-
+# backend model set (opendatalab/PDF-Extract-Kit-1.0). Baking both removes
+# the dependency on RunPod's Cached Models setup, the Network Volume, and
+# any per-endpoint runtime-download tax. Trade-off: image grows by ~4 GB.
 
 ARG VLLM_VERSION=v0.11.2
 FROM vllm/vllm-openai:${VLLM_VERSION}
 
-# HF_HOME points at the RunPod volume so HuggingFace + MinerU resolve cached
-# weights without redownloading.
-#
 # HF_HUB_OFFLINE=1 + TRANSFORMERS_OFFLINE=1 force the HuggingFace libs to
-# read from cache only. Per RunPod's model-caching tutorial: when Cached
-# Models is enabled, the volume is populated BEFORE the worker starts
-# (non-billable), so the model is always already there by the time the
-# handler runs. Forcing offline mode prevents the failure case where a
-# misconfigured endpoint silently re-downloads at job time on every fresh
-# worker (which IS billable). Users get a clean "cache miss" error instead
-# of mysterious billing — fail fast > fail slow.
+# read from cache only. Since model weights are baked into the image, the
+# cache is always present. Offline mode prevents accidental downloads if
+# anything tries to call out at runtime — fail-fast against misconfigured
+# endpoints.
 #
 # Model selection: MinerU 3.1.x's library default is already
-# `opendatalab/MinerU2.5-Pro-2604-1.2B` for the VLM backend — no env var
-# override needed. (Earlier versions used 2509 and required gymnastics to
-# override; we just upgraded out of that problem.)
+# `opendatalab/MinerU2.5-Pro-2604-1.2B` for the VLM backend; pipeline
+# backend uses `opendatalab/PDF-Extract-Kit-1.0`. Both are baked below.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    HF_HOME=/runpod-volume/huggingface-cache \
     HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1
 
@@ -74,12 +61,20 @@ RUN pip install --no-cache-dir uv
 COPY requirements.txt /worker/requirements.txt
 RUN uv pip install --system --no-cache -r requirements.txt
 
-# Model weights are NOT baked into the image. They come from RunPod's
-# Cached Models volume at /runpod-volume/huggingface-cache (configured per
-# endpoint in the dashboard). First cold start populates the cache from
-# HuggingFace (non-billable); subsequent starts read straight off the volume.
+# Bake both MinerU model dependencies into the image at /root/.cache/huggingface
+# (HF's default cache path). Runs AFTER pip install so huggingface_hub is
+# available, and BEFORE the handler.py COPY so iterating on handler code
+# doesn't bust this ~4 GB layer.
+#
+# - MinerU2.5-Pro-2604-1.2B: the VLM backend's model
+# - PDF-Extract-Kit-1.0: the pipeline backend's OCR + layout + formula +
+#   table models
+RUN python3 -c "from huggingface_hub import snapshot_download; \
+    snapshot_download(repo_id='opendatalab/MinerU2.5-Pro-2604-1.2B'); \
+    snapshot_download(repo_id='opendatalab/PDF-Extract-Kit-1.0')"
 
-# Copy the worker code last so iterating on it doesn't bust the pip layer.
+# Copy the worker code last so iterating on it doesn't bust the pip or
+# model-cache layers.
 COPY handler.py /worker/handler.py
 
 # Tiny fixture PDF used by the RunPod Hub validation tests (.runpod/tests.json

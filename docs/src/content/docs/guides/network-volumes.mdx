@@ -46,17 +46,11 @@ Network volume storage on RunPod is roughly **$0.07/GB-month** (check [current p
 
 ## Problem 2: caching MinerU weights
 
-This template uses RunPod's **Cached Models** feature by default (`HF_HOME=/runpod-volume/huggingface-cache`). RunPod manages a separate volume for cached models per endpoint — that's the path the Dockerfile points at.
+**You don't need to do anything here** — both model dependencies (`opendatalab/MinerU2.5-Pro-2604-1.2B` for the VLM backend and `opendatalab/PDF-Extract-Kit-1.0` for the pipeline backend) are **baked into the worker image at build time**, at `/root/.cache/huggingface/`. No Cached Models setup, no Network Volume, no runtime download.
 
-**You don't need to manually configure a network volume for the VLM weights** — Cached Models populates `/runpod-volume/huggingface-cache/hub/...` before the worker starts, non-billable.
+This is the community pattern for fixed multi-model workers (worker-comfyui, worker-faster_whisper, runpod-worker-real-esrgan all do the same). Trade-off: the image is ~4 GB larger, but RunPod caches images regionally so pulls are fast after the first.
 
-But if you want explicit control (or you're running outside RunPod's Hub flow), you *can* point `HF_HOME` at a manually-managed network volume by overriding the env var on the endpoint:
-
-```
-HF_HOME=/runpod-volume/my-hf-cache
-```
-
-Then pre-stage the model with `huggingface_hub.snapshot_download(...)` from a filesystem pod with the volume mounted. Subsequent worker starts read straight from disk.
+If you'd rather slim the image and rely on RunPod's Cached Models feature for the VLM only (which has a single-model dashboard limit), fork the Dockerfile to skip the `RUN snapshot_download` step. The pipeline backend would then need either a Network Volume or `HF_HUB_OFFLINE=0` for runtime downloads.
 
 ## Problem 3: persisting outputs between jobs
 
@@ -97,4 +91,4 @@ If your endpoint has multiple regions enabled and you're running on a network vo
 
 - **You parse each document once and discard.** Just use `file_url` — no point paying storage rent.
 - **Your input set is small and changes constantly.** Inline base64 (`file_b64`) is fine for ≤20 MB inputs.
-- **You only care about cold-start latency.** Cached Models already handles VLM weight caching; a manual volume duplicates that work.
+- **You only care about cold-start latency.** Both MinerU models are baked into the image; a volume for model weights duplicates that work.

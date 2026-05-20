@@ -104,69 +104,6 @@ import runpod
 from runpod.serverless.utils.rp_validator import validate
 
 
-def _ensure_canonical_hf_cache_symlinks() -> None:
-    """Workaround for RunPod's Cached Models lowercasing the model dir name.
-
-    Empirically verified on 2026-05-21 (probe handler run against a fresh
-    worker): RunPod populates the cache at
-    `/runpod-volume/huggingface-cache/hub/models--opendatalab--mineru2.5-pro-2604-1.2b/`
-    even when the Model field is entered with canonical case
-    `opendatalab/MinerU2.5-Pro-2604-1.2B`. HuggingFace's `huggingface_hub`
-    library uses the literal repo_id to construct the cache dir name and
-    looks for `models--opendatalab--MinerU2.5-Pro-2604-1.2B/`. On Linux
-    these are different directories — the lookup fails with
-    `LocalEntryNotFoundError`.
-
-    Fix: at worker startup, create a relative symlink from each canonical
-    name to RunPod's lowercased variant. MinerU's library then resolves
-    cleanly. Idempotent: skips if the canonical name already exists.
-
-    Why a symlink rather than `mineru.json + MINERU_MODEL_SOURCE=local`:
-    same fix works for every HF library MinerU uses internally, without
-    us having to discover snapshot hashes at runtime or write configs.
-    """
-    hf_home = os.environ.get("HF_HOME") or os.path.expanduser("~/.cache/huggingface")
-    hub = Path(hf_home) / "hub"
-    if not hub.is_dir():
-        return
-
-    # MinerU 3.1.x looks up these repo IDs internally. Each entry maps the
-    # canonical-case directory name (what HF's library constructs) to the
-    # lowercase variant (what RunPod populates).
-    canonical_to_lower = {
-        "models--opendatalab--MinerU2.5-Pro-2604-1.2B": "models--opendatalab--mineru2.5-pro-2604-1.2b",
-        "models--opendatalab--PDF-Extract-Kit-1.0":     "models--opendatalab--pdf-extract-kit-1.0",
-    }
-    for canonical, lower in canonical_to_lower.items():
-        canonical_path = hub / canonical
-        if canonical_path.exists() or canonical_path.is_symlink():
-            # Already there (real dir, or our symlink from a previous warm start).
-            continue
-        lower_path = hub / lower
-        if not lower_path.is_dir():
-            # This model isn't cached on the volume — nothing to link.
-            continue
-        try:
-            # Relative symlink so it stays valid regardless of mount path.
-            canonical_path.symlink_to(lower, target_is_directory=True)
-            print(
-                f"[mineru-worker] cache symlink: {canonical} -> {lower}",
-                flush=True,
-            )
-        except OSError as e:
-            print(
-                f"[mineru-worker] WARN: failed to create cache symlink "
-                f"{canonical} -> {lower}: {e}",
-                flush=True,
-            )
-
-
-# Run the symlink fix BEFORE MinerU imports so the cache is correctly shaped
-# by the time MinerU's library scans HF_HOME. Stdlib-only; safe to call on
-# any environment.
-_ensure_canonical_hf_cache_symlinks()
-
-
 # MinerU's heavy imports run lazily inside _run_mineru so the handler module
 # itself imports on a CPU-only test machine (CI exercises input validation
 # and packaging without needing a GPU). Module-level only does a soft probe

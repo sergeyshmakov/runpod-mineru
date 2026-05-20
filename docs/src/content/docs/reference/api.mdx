@@ -92,7 +92,7 @@ Every response includes a `debug` block with information that lets you correlate
 {
   "debug": {
     "backend": "vlm-auto-engine",
-    "model_dir": "/runpod-volume/huggingface-cache/hub/models--opendatalab--MinerU2.5-Pro-2604-1.2B/snapshots/<hash>",
+    "model_dir": "/root/.cache/huggingface/hub/models--opendatalab--MinerU2.5-Pro-2604-1.2B/snapshots/<hash>",
     "gpu": {
       "available": true,
       "name": "NVIDIA RTX 4090",
@@ -111,7 +111,7 @@ Every response includes a `debug` block with information that lets you correlate
 | Field | Notes |
 |---|---|
 | `backend` | The backend that ran. Echoes the input or the default |
-| `model_dir` | Filesystem path of the model snapshot that loaded. Useful for verifying that a Cached Models endpoint is hitting the right snapshot (`null` if HF_HOME is empty) |
+| `model_dir` | Filesystem path of the model snapshot that loaded. Both VLM and pipeline models are baked into the image at `/root/.cache/huggingface/`; the path you see here proves which snapshot the worker resolved (`null` if HF cache is empty, which should not happen on the published image) |
 | `gpu` | Card name, `compute_capability` (8.6 = Ampere, 8.9 = Ada, 9.0 = Hopper, 12.0 = Blackwell), VRAM. Helps debug "why did my job land on a different card than my pool config?" |
 | `phase_ms` | Per-phase timings: `fetch_pdf` (download/decode), `mineru_parse` (MinerU's `aio_do_parse`), `package` (tarball or inline assembly) |
 

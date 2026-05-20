@@ -138,8 +138,8 @@ def _build_parser() -> argparse.ArgumentParser:
         default=DEFAULTS["container_disk_gb"],
         help=(
             f"per-worker container disk (default: {DEFAULTS['container_disk_gb']} GB). "
-            f"Model weights live on RunPod's Cached Models volume, not the container disk; "
-            f"this is just for code + tempfiles during a parse."
+            f"Image bakes ~4 GB of model weights (VLM + pipeline OCR), so the worker "
+            f"image is large; bump if your local cache or temp PDFs push over 30 GB."
         ),
     )
 
