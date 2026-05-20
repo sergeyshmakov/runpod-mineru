@@ -163,6 +163,79 @@ def _find_model_dir() -> str | None:
     return str(best)
 
 
+def _resolve_snapshot_path(hub_root: Path, model_id: str) -> dict[str, Any]:
+    """Emulate the resolve_snapshot_path() helper from RunPod's tutorial.
+
+    Returns a dict that says what the tutorial's algorithm would have found
+    for `model_id` at `hub_root` — including whether refs/main is stale
+    (points at a hash that doesn't exist in snapshots/).
+    """
+    out: dict[str, Any] = {
+        "model_id": model_id,
+        "expected_root": "",
+        "model_root_exists": False,
+        "refs_main_path": "",
+        "refs_main_content": None,
+        "snapshots_dir_exists": False,
+        "snapshot_subdirs": [],
+        "resolved_path": None,
+        "resolution_method": None,
+        "issue": None,
+    }
+    if "/" not in model_id:
+        out["issue"] = f"model_id {model_id!r} not in org/name format"
+        return out
+    org, name = model_id.split("/", 1)
+    model_root = hub_root / f"models--{org}--{name}"
+    out["expected_root"] = str(model_root)
+    if not model_root.is_dir():
+        out["issue"] = "model_root not present (RunPod didn't populate, or wrong casing)"
+        return out
+    out["model_root_exists"] = True
+
+    refs_main = model_root / "refs" / "main"
+    out["refs_main_path"] = str(refs_main)
+    if refs_main.is_file():
+        try:
+            out["refs_main_content"] = refs_main.read_text(encoding="utf-8").strip()
+        except OSError as e:
+            out["refs_main_content"] = f"<read error: {e}>"
+
+    snapshots_dir = model_root / "snapshots"
+    out["snapshots_dir_exists"] = snapshots_dir.is_dir()
+    if out["snapshots_dir_exists"]:
+        try:
+            out["snapshot_subdirs"] = sorted(
+                d.name for d in snapshots_dir.iterdir() if d.is_dir()
+            )
+        except OSError as e:
+            out["issue"] = f"snapshots/ iter error: {e}"
+            return out
+
+    # Resolution attempt 1: refs/main → snapshots/<hash>/
+    if out["refs_main_content"] and isinstance(out["refs_main_content"], str):
+        candidate = snapshots_dir / out["refs_main_content"]
+        if candidate.is_dir():
+            out["resolved_path"] = str(candidate)
+            out["resolution_method"] = "refs/main"
+            return out
+        out["issue"] = (
+            f"refs/main points at {out['refs_main_content']!r} but "
+            f"snapshots/{out['refs_main_content']}/ does not exist (stale refs/main)"
+        )
+
+    # Resolution attempt 2: first available snapshot subdir
+    if out["snapshot_subdirs"]:
+        first = snapshots_dir / out["snapshot_subdirs"][0]
+        out["resolved_path"] = str(first)
+        out["resolution_method"] = "first snapshot subdir (fallback)"
+        return out
+
+    if out["issue"] is None:
+        out["issue"] = "no snapshots/ subdir or no entries inside it"
+    return out
+
+
 def _probe_filesystem() -> dict[str, Any]:
     """Inspect /runpod-volume layout for Cached Models debugging.
 
@@ -205,7 +278,20 @@ def _probe_filesystem() -> dict[str, Any]:
         },
         "paths": {},
         "models_found": [],
+        "resolution_attempts": [],
     }
+
+    # Try the tutorial's snapshot resolver for each model MinerU would care
+    # about. Reports whether refs/main is stale, whether canonical casing is
+    # present, and what (if anything) MinerU's library would find.
+    if hub_path and hub_path.is_dir():
+        for model_id in (
+            "opendatalab/MinerU2.5-Pro-2604-1.2B",  # VLM backend
+            "opendatalab/PDF-Extract-Kit-1.0",      # pipeline backend
+        ):
+            out["resolution_attempts"].append(
+                _resolve_snapshot_path(hub_path, model_id)
+            )
 
     for label, path_str in (
         ("/runpod-volume", "/runpod-volume"),
