@@ -1,4 +1,5 @@
-# MinerU 2.5 on RunPod Serverless — generic PDF parsing worker.
+# MinerU on RunPod Serverless — generic PDF parsing worker.
+# MinerU 3.1.x runtime, MinerU2.5-Pro-2604-1.2B VLM as the default model.
 #
 # Base image: vllm/vllm-openai (recommended by MinerU upstream — bundles CUDA
 # + a working vLLM that the VLM backend depends on).
@@ -6,27 +7,46 @@
 # At runtime: handler.py listens for RunPod jobs, downloads/decodes the input
 # PDF, calls MinerU's async parse, and returns the result as a base64 tarball.
 #
-# The MinerU 2.5 VLM model (~2.5 GB) is pre-cached at build time into the
-# image (see `Pre-cache MinerU weights` step below), so cold-starts don't
-# depend on HuggingFace reachability or model-download time. With RunPod
-# FlashBoot + idle_timeout = 10 s the model stays in GPU memory across
-# requests within the same warm container.
+# Model weights live on RunPod's per-endpoint Cached Models volume mounted
+# under /runpod-volume/huggingface-cache (matches the path RunPod's tutorial
+# at docs.runpod.io/tutorials/serverless/model-caching-text uses). Snapshot
+# layout is the HuggingFace standard:
+#   /runpod-volume/huggingface-cache/hub/models--{org}--{name}/snapshots/...
+#
+# To use this template effectively:
+#   1. In the RunPod endpoint dashboard, enable "Cached Models"
+#   2. Add `opendatalab/MinerU2.5-Pro-2604-1.2B` for the VLM backend
+#   3. (Optional) Add pipeline models if you use the `pipeline` backend
+#
+# First cold start populates the cache (non-billable); subsequent starts
+# read weights directly from the volume. Image stays ~2.5 GB smaller than
+# the previous bake-in approach.
 
-ARG VLLM_VERSION=v0.6.6
+ARG VLLM_VERSION=v0.11.2
 FROM vllm/vllm-openai:${VLLM_VERSION}
 
-# Keep Python noise down, write cache to a single root. Override MinerU's
-# default model (MinerU2.5-2509-1.2B) to the Pro variant (2604-1.2B) which
-# is what this template documents and pre-caches below. Experiment to
-# verify MINERU_VL_MODEL_NAME is respected by the local vlm-vllm-async-engine
-# backend (docs hint it's for remote openai-server use; live build will
-# confirm).
+# HF_HOME points at the RunPod volume so HuggingFace + MinerU resolve cached
+# weights without redownloading.
+#
+# HF_HUB_OFFLINE=1 + TRANSFORMERS_OFFLINE=1 force the HuggingFace libs to
+# read from cache only. Per RunPod's model-caching tutorial: when Cached
+# Models is enabled, the volume is populated BEFORE the worker starts
+# (non-billable), so the model is always already there by the time the
+# handler runs. Forcing offline mode prevents the failure case where a
+# misconfigured endpoint silently re-downloads at job time on every fresh
+# worker (which IS billable). Users get a clean "cache miss" error instead
+# of mysterious billing — fail fast > fail slow.
+#
+# Model selection: MinerU 3.1.x's library default is already
+# `opendatalab/MinerU2.5-Pro-2604-1.2B` for the VLM backend — no env var
+# override needed. (Earlier versions used 2509 and required gymnastics to
+# override; we just upgraded out of that problem.)
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    HF_HOME=/root/.cache/huggingface \
-    TRANSFORMERS_OFFLINE=0 \
-    MINERU_VL_MODEL_NAME=opendatalab/MinerU2.5-Pro-2604-1.2B
+    HF_HOME=/runpod-volume/huggingface-cache \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1
 
 # vllm-openai inherits an entrypoint that launches the OpenAI server. Override
 # it so our handler can be the process.
@@ -54,17 +74,12 @@ RUN pip install --no-cache-dir uv
 COPY requirements.txt /worker/requirements.txt
 RUN uv pip install --system --no-cache -r requirements.txt
 
-# Pre-cache MinerU weights into the image. Adds ~2.5 GB to the image but
-# eliminates the model download on first cold start (~60-90 s of latency
-# saved per fresh worker, and removes a network dependency on huggingface.co
-# at runtime). Runs after `pip install` so huggingface_hub is available;
-# runs BEFORE the handler.py copy so iterating on handler code doesn't bust
-# the model layer.
-RUN python3 -c "from huggingface_hub import snapshot_download; \
-    snapshot_download(repo_id='opendatalab/MinerU2.5-Pro-2604-1.2B')"
+# Model weights are NOT baked into the image. They come from RunPod's
+# Cached Models volume at /runpod-volume/huggingface-cache (configured per
+# endpoint in the dashboard). First cold start populates the cache from
+# HuggingFace (non-billable); subsequent starts read straight off the volume.
 
-# Copy the worker code last so iterating on it doesn't bust the pip / model
-# layers.
+# Copy the worker code last so iterating on it doesn't bust the pip layer.
 COPY handler.py /worker/handler.py
 
 # Tiny fixture PDF used by the RunPod Hub validation tests (.runpod/tests.json

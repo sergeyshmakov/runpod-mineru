@@ -1,9 +1,11 @@
 # Container-side dependencies. Consumers do NOT need these — they only need
 # the mineru_client subpackage which has its own pyproject.toml.
 
-# MinerU 2.5 with vLLM backend support. Pinned to a 2.5.x line so the handler
-# behaviour stays stable; bump deliberately.
-mineru[core,vllm]>=2.5.0,<2.6.0
+# MinerU with vLLM backend support. The 3.x line is where the library default
+# became opendatalab/MinerU2.5-Pro-2604-1.2B (the model this template name
+# advertises). 3.1.x requires vllm 0.10.1.1+ — see Dockerfile FROM tag.
+# Pinned to a 3.1.x line so the handler behaviour stays stable; bump deliberately.
+mineru[core,vllm]>=3.1.0,<4.0.0
 
 # RunPod serverless SDK — provides runpod.serverless.start() and async helpers.
 runpod>=1.7.0
