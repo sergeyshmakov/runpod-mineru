@@ -49,6 +49,7 @@ package-lock.json
 node_modules/
 .releaserc.json
 commitlint.config.js
+context7.json
 
 # CI + GitHub-only config
 .github/
