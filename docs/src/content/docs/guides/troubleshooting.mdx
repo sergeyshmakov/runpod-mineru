@@ -64,9 +64,9 @@ The worker keeps running the previous image; the new one never propagates.
 
 **Cause**: RunPod's Hub validator spins up a real GPU pod to execute `.runpod/tests.json` after each build. If RunPod can't allocate the `gpuTypeId` named in that file during the build window, the whole build fails — even though the Docker image itself is fine.
 
-**Fix**: this template currently keeps Hub metadata under `.runpod-disabled/` rather than `.runpod/`, so Hub auto-detection is disabled. When the folder is restored, keep `tests_.json` (underscore suffix) rather than `tests.json` if you want to skip validator execution.
+**Fix**: this template currently keeps Hub metadata under `.runpod/` rather than `.runpod/`, so Hub auto-detection is disabled. When the folder is restored, keep `tests_.json` (underscore suffix) rather than `tests.json` if you want to skip validator execution.
 
-To re-enable testing later, rename `.runpod-disabled/` back to `.runpod/`, then rename `tests_.json` to `tests.json` and consider switching `gpuTypeId` from `"NVIDIA RTX A5000"` to `"NVIDIA GeForce RTX 4090"` — 4090 has the highest pool availability across RunPod's regions.
+To re-enable testing later, rename `.runpod/` back to `.runpod/`, then rename `tests_.json` to `tests.json` and consider switching `gpuTypeId` from `"NVIDIA RTX A5000"` to `"NVIDIA GeForce RTX 4090"` — 4090 has the highest pool availability across RunPod's regions.
 
 ## VLM backend crashes on Blackwell GPUs (cc=12.0)
 

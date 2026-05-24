@@ -39,7 +39,7 @@ Revisit once we have users.
 - [ ] `handler.py` (worker job input/output contract)
 - [ ] `mineru_client/` (Python client API)
 - [ ] `Dockerfile` / `requirements.txt`
-- [ ] `.runpod-disabled/hub.json` (disabled Hub listing, env array, GPU pools)
+- [ ] `.runpod/hub.json` (disabled Hub listing, env array, GPU pools)
 - [ ] `deploy.py`
 - [ ] Docs (`docs/`, README, CONTRIBUTING, blog)
 - [ ] Tests
@@ -49,7 +49,7 @@ Revisit once we have users.
 - [ ] Tests pass locally: `pip install -e ".[test]" && pytest`
 - [ ] New code paths have at least one test (CPU-only; CI has no GPU).
 - [ ] If touching the wire contract: handler docstring AND `docs/src/content/docs/reference/api.mdx` both updated.
-- [ ] If adding an env var: it's in `.runpod-disabled/hub.json` `env` array AND the Dockerfile/docs reference it.
+- [ ] If adding an env var: it's in `.runpod/hub.json` `env` array AND the Dockerfile/docs reference it.
 - [ ] No secrets in the diff (`.env`, `RUNPOD_API_KEY`, `HF_TOKEN`, `BUCKET_*`).
 - [ ] `CHANGELOG.md` is **not** edited by hand — semantic-release will append the right entry on merge.
 

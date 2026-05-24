@@ -66,13 +66,3 @@ tmp-screenshots/
 *.log
 *.tmp
 *.swp
-
-# DO keep .runpod-disabled/test-fixture.pdf — it's referenced by smoke inputs.
-# (Everything else in .runpod-disabled/ is config / docs that doesn't need to be
-# in the image. icon.png is served from raw.githubusercontent.com, not
-# COPY'd into the worker.)
-.runpod-disabled/hub.json
-.runpod-disabled/tests.json
-.runpod-disabled/tests_.json
-.runpod-disabled/README.md
-.runpod-disabled/icon.png

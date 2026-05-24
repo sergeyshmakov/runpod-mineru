@@ -1,6 +1,6 @@
 {
   "input": {
-    "volume_path": ".runpod-disabled/test-fixture.pdf",
+    "volume_path": ".runpod/test-fixture.pdf",
     "start_page": 0,
     "end_page": 0,
     "return": "tarball_b64",

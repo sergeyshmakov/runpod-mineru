@@ -86,7 +86,7 @@ COPY handler.py /worker/handler.py
 # Tiny fixture PDF used by local smoke input and optional Hub tests. It is
 # copied into /worker/test-fixture.pdf so validations can round-trip a real
 # document without adding meaningful image size.
-COPY .runpod-disabled/test-fixture.pdf /worker/test-fixture.pdf
+COPY .runpod/test-fixture.pdf /worker/test-fixture.pdf
 
 # RunPod's serverless runtime invokes Python directly. `python3` is what
 # vllm/vllm-openai ships on PATH; `python` is not always aliased.

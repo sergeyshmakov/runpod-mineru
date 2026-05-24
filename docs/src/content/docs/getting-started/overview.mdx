@@ -10,7 +10,7 @@ description: Architecture, what's in the repo, supported workloads, and how it c
 - **`handler.py`** — the serverless worker. Accepts a PDF via URL, base64, or mounted-volume path; calls MinerU's async parse; returns Markdown + `content_list` + `middle.json` + images.
 - **`mineru_client/`** — the Python package consumers import. One class (`MineruClient`), two methods (`parse_document`, `parse_document_from_file`). Pure-Python; imports nothing GPU- or MinerU-related, so it's safe to depend on from any caller.
 - **`deploy.py` / `destroy.py`** — stand up and tear down the RunPod endpoint from CLI flags. Every dashboard setting is exposed as a flag.
-- **`.runpod-disabled/hub.json`** — disabled RunPod Hub listing metadata (title, description, GPU pool list, CUDA versions).
+- **`.runpod/hub.json`** — disabled RunPod Hub listing metadata (title, description, GPU pool list, CUDA versions).
 - **`examples/`** — `parse_url_example.py`, `parse_b64_example.py`, and a `parser_adapter_example.py` showing how to wrap MinerU output in your own typed domain model.
 
 ## Who it's for
