@@ -3,6 +3,7 @@
   "description": "Serverless PDF → Markdown / JSON via MinerU. 3.1.x runtime running the MinerU2.5-Pro-2604-1.2B VLM. Also accepts images (PNG/JPEG/GIF/BMP/TIFF/WebP), DOCX, PPTX, and XLSX. Scales to zero with a 10 s idle window, ~$0.0003 per page on 24 GB Ampere serverless (Flex rate; see runpod.io/pricing). Five MinerU backends (pipeline / vlm-auto / vlm-http-client / hybrid-auto / hybrid-http-client), three input transports (URL / base64 / mounted volume), three output formats (gzipped tarball / inline / S3 presigned URL). Generic document-parsing primitive for RAG and document-context systems.",
   "type": "serverless",
   "category": "language",
+  "iconUrl": "https://raw.githubusercontent.com/sergeyshmakov/mineru-runpod/main/.runpod-disabled/icon.png",
   "config": {
     "runsOn": "GPU",
     "containerDiskInGb": 50,
