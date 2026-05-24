@@ -1,5 +1,5 @@
 ---
-title: runpod-mineru
+title: mineru-runpod
 description: Open-source template to deploy MinerU (3.1 runtime, 2.5 Pro VLM) onto RunPod Serverless in two clicks. Your endpoint, scales to zero, ~$0.0003 per page on 24 GB Ampere.
 template: splash
 hero:
@@ -7,15 +7,15 @@ hero:
   tagline: Open-source template that wires the MinerU PDF parser onto your own RunPod Serverless endpoint. MinerU 3.1.x runtime running the `MinerU2.5-Pro-2604-1.2B` VLM. ~$0.0003 per page serverless, scales to zero.
   image:
     html: |
-      <img src="/runpod-mineru/promo_bg.png" alt="PDF transformed to Markdown by a serverless cloud" class="rm-hero-promo" loading="eager" decoding="async" width="1024" height="1024" />
+      <img src="/mineru-runpod/promo_bg.png" alt="PDF transformed to Markdown by a serverless cloud" class="rm-hero-promo" loading="eager" decoding="async" width="1024" height="1024" />
 
   actions:
     - text: Get started
-      link: /runpod-mineru/getting-started/overview/
+      link: /mineru-runpod/getting-started/overview/
       icon: right-arrow
       variant: primary
     - text: GitHub
-      link: https://github.com/sergeyshmakov/runpod-mineru
+      link: https://github.com/sergeyshmakov/mineru-runpod
       icon: external
       variant: minimal
     - text: MinerU model card
@@ -66,31 +66,31 @@ client.save_tarball(result, "./out/doc")
   <Card title="How it's built" icon="open-book">
     Architecture, what's in the repo, supported workloads, and how it compares to Marker, GROBID, and Nougat.
 
-    [Read the overview](/runpod-mineru/getting-started/overview/)
+    [Read the overview](/mineru-runpod/getting-started/overview/)
   </Card>
   <Card title="Deploy in 10 minutes" icon="external">
-    Sign up for RunPod, deploy `runpod-mineru` from the Hub, paste the endpoint id, parse your first PDF.
+    Sign up for RunPod, deploy `mineru-runpod` from the Hub, paste the endpoint id, parse your first PDF.
 
     [Sign up for RunPod](https://runpod.io?ref=31jdfpnq)
   </Card>
   <Card title="Pick the right GPU" icon="setting">
     When 24 GB is enough, when to jump to 48 GB, and which RunPod pool IDs map to which workload shapes. Includes the official MinerU hardware compatibility table.
 
-    [Choosing a GPU](/runpod-mineru/guides/choosing-gpu/)
+    [Choosing a GPU](/mineru-runpod/guides/choosing-gpu/)
   </Card>
   <Card title="When something breaks" icon="error">
     Hub build flakes, Blackwell crashes, Latin-on-Cyrillic, OOM, cold starts. How to read the `debug` block to diagnose anything else.
 
-    [Troubleshooting](/runpod-mineru/guides/troubleshooting/)
+    [Troubleshooting](/mineru-runpod/guides/troubleshooting/)
   </Card>
   <Card title="The source" icon="github">
     MIT-licensed. ~30 files. Issues and PRs welcome.
 
-    [sergeyshmakov/runpod-mineru](https://github.com/sergeyshmakov/runpod-mineru)
+    [sergeyshmakov/mineru-runpod](https://github.com/sergeyshmakov/mineru-runpod)
   </Card>
   <Card title="Blog" icon="document">
     Project notes and announcements.
 
-    [Read the blog](/runpod-mineru/blog/)
+    [Read the blog](/mineru-runpod/blog/)
   </Card>
 </CardGrid>

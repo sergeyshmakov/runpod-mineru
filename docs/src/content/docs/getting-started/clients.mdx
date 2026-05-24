@@ -1,6 +1,6 @@
 ---
 title: Clients
-description: Two ways to call your runpod-mineru endpoint. The Python MineruClient for quick starts, and the direct RunPod SDK / HTTP API for production.
+description: Two ways to call your mineru-runpod endpoint. The Python MineruClient for quick starts, and the direct RunPod SDK / HTTP API for production.
 ---
 
 The worker template ships a Python wrapper (`mineru_client`) for convenience, but the actual API is the JSON payload contract that the handler accepts. You can hit the endpoint from any language. This page covers the two main paths and when to pick each.
@@ -10,7 +10,7 @@ The worker template ships a Python wrapper (`mineru_client`) for convenience, bu
 A small Python wrapper that lives in this repo. Best for prototyping, single-user scripts, and Python projects that don't yet need async submission or custom retry behaviour.
 
 ```powershell
-pip install "mineru-client @ git+https://github.com/sergeyshmakov/runpod-mineru@v1.1.0"
+pip install "mineru-client @ git+https://github.com/sergeyshmakov/mineru-runpod@v1.1.0"
 ```
 
 ```python
@@ -35,7 +35,7 @@ That's it. The wrapper builds the JSON payload, calls `/runsync` via the RunPod 
 - **No async submission.** Only exposes `run_sync`. If you want to fire off 100 parses concurrently, you'll need your own thread pool or `asyncio` layer on top.
 - **No retries or backoff.** Cold-start jobs can fail; the wrapper does not retry. Add your own retry logic with `tenacity` or similar if you need it.
 - **No streaming progress.** The handler emits `progress_update` events during a parse; the client ignores them.
-- **No typed response models.** Returns a raw `dict`. If you want a `ParsedDocument` Pydantic model, write your own adapter (see [the adapter example](https://github.com/sergeyshmakov/runpod-mineru/blob/main/examples/parser_adapter_example.py)).
+- **No typed response models.** Returns a raw `dict`. If you want a `ParsedDocument` Pydantic model, write your own adapter (see [the adapter example](https://github.com/sergeyshmakov/mineru-runpod/blob/main/examples/parser_adapter_example.py)).
 
 This is a deliberate scope choice. The wrapper is a starter, not a production framework.
 
@@ -83,7 +83,7 @@ Works in TypeScript, Go, Rust, curl, anything with an HTTP client. The endpoints
 - `GET /v2/{endpoint_id}/status/{job_id}` — poll job status
 - `GET /v2/{endpoint_id}/stream/{job_id}` — stream progress updates
 
-Full job-input shape is in [API reference](/runpod-mineru/reference/api/).
+Full job-input shape is in [API reference](/mineru-runpod/reference/api/).
 
 ## How to choose
 
@@ -127,4 +127,4 @@ Or with `return: "inline"`:
 }
 ```
 
-Failure responses set `ok: false` and include a top-level `error` key; RunPod marks the job FAILED in the dashboard. See [API reference](/runpod-mineru/reference/api/) for the full schema.
+Failure responses set `ok: false` and include a top-level `error` key; RunPod marks the job FAILED in the dashboard. See [API reference](/mineru-runpod/reference/api/) for the full schema.

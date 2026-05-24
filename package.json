@@ -1,8 +1,8 @@
 {
-  "name": "runpod-mineru",
+  "name": "mineru-runpod",
   "version": "0.0.0-semantic-release",
   "private": true,
-  "description": "Dev tooling for runpod-mineru: conventional-commit linting and automated changelog + version management via semantic-release. The actual project is Python.",
+  "description": "Dev tooling for mineru-runpod: conventional-commit linting and automated changelog + version management via semantic-release. The actual project is Python.",
   "scripts": {
     "commitlint": "commitlint --edit",
     "release": "semantic-release"

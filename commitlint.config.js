@@ -1,5 +1,5 @@
 /**
- * Commit message format for runpod-mineru.
+ * Commit message format for mineru-runpod.
  *
  * Enforces the Conventional Commits spec so semantic-release can derive
  * version bumps + changelog entries automatically.

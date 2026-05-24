@@ -10,5 +10,5 @@ contact_links:
     url: https://github.com/vllm-project/vllm/issues
     about: Inference engine errors, CUDA mismatches, vLLM crashes.
   - name: Discussions
-    url: https://github.com/sergeyshmakov/runpod-mineru/discussions
+    url: https://github.com/sergeyshmakov/mineru-runpod/discussions
     about: Open-ended questions, deploy tips, integration ideas, show-and-tell.

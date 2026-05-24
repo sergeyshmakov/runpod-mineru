@@ -3,7 +3,7 @@ title: Overview
 description: Architecture, what's in the repo, supported workloads, and how it compares to Marker, GROBID, and Nougat.
 ---
 
-`runpod-mineru` is a generic, reusable [MinerU](https://github.com/opendatalab/MinerU) PDF-parsing service running on [RunPod Serverless](https://runpod.io?ref=31jdfpnq). MinerU 3.1.x runtime with the [`MinerU2.5-Pro-2604-1.2B`](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B) VLM by default. The repo deliberately knows nothing about any specific downstream system — it ships a worker image, a small Python client, and the deploy / destroy glue. Anything that needs `PDF → structured Markdown + JSON` (a RAG pipeline, a document indexer, an Office-doc archive) calls it the same way.
+`mineru-runpod` is a generic, reusable [MinerU](https://github.com/opendatalab/MinerU) PDF-parsing service running on [RunPod Serverless](https://runpod.io?ref=31jdfpnq). MinerU 3.1.x runtime with the [`MinerU2.5-Pro-2604-1.2B`](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B) VLM by default. The repo deliberately knows nothing about any specific downstream system — it ships a worker image, a small Python client, and the deploy / destroy glue. Anything that needs `PDF → structured Markdown + JSON` (a RAG pipeline, a document indexer, an Office-doc archive) calls it the same way.
 
 ## What's in the repo
 
@@ -31,7 +31,7 @@ description: Architecture, what's in the repo, supported workloads, and how it c
 
 ## How it compares
 
-| | runpod-mineru | Marker | GROBID | Nougat |
+| | mineru-runpod | Marker | GROBID | Nougat |
 |---|---|---|---|---|
 | Scale-to-zero | ✅ ready to use | ⚠️ possible, needs extra setup | ❌ always-on | ❌ |
 | GPU | required | CPU or GPU | CPU | required |
@@ -42,20 +42,20 @@ description: Architecture, what's in the repo, supported workloads, and how it c
 
 Marker uses Surya as its in-process OCR/layout engine; Surya's weights ship under a modified RAIL-M license. The license's §2(c) competitor clause does not include the $2M revenue carveout that §2(a) and §2(b) carry, while Marker's own README markets the model weights as free for "startups under $2M funding/revenue." The two read differently — get counsel before depending on Marker for a service that could be characterized as competitive. Datalab's [Chandra](https://github.com/datalab-to/chandra) model (what their hosted API runs) carries the same modified RAIL-M license.
 
-See the [project README](https://github.com/sergeyshmakov/runpod-mineru#how-does-it-compare) for the fully source-cited version of this comparison.
+See the [project README](https://github.com/sergeyshmakov/mineru-runpod#how-does-it-compare) for the fully source-cited version of this comparison.
 
 ## What it accepts and what comes back
 
-- **Inputs**: PDF, image (PNG/JPEG/GIF/BMP/TIFF/WebP), DOCX, PPTX, XLSX — auto-detected from bytes. Three transports: URL, base64, or a path on a mounted volume. See [Input formats](/runpod-mineru/guides/input-formats/).
-- **Outputs**: Markdown + `content_list` + `middle.json` + extracted images. Three transport modes: base64 tarball, inline fields, or presigned URL to an S3-compatible bucket. See [Output modes](/runpod-mineru/guides/output-modes/).
-- **Backends**: five MinerU backends — the VLM (model card tagged English + Chinese; empirically handles Cyrillic correctly on the Pro model), the pipeline OCR (109 languages via PaddleOCR, documented-safe for any non-Latin script), the hybrid auto-router, and split-tier deploys. See [Picking a backend](/runpod-mineru/guides/choosing-gpu/#picking-a-backend).
+- **Inputs**: PDF, image (PNG/JPEG/GIF/BMP/TIFF/WebP), DOCX, PPTX, XLSX — auto-detected from bytes. Three transports: URL, base64, or a path on a mounted volume. See [Input formats](/mineru-runpod/guides/input-formats/).
+- **Outputs**: Markdown + `content_list` + `middle.json` + extracted images. Three transport modes: base64 tarball, inline fields, or presigned URL to an S3-compatible bucket. See [Output modes](/mineru-runpod/guides/output-modes/).
+- **Backends**: five MinerU backends — the VLM (model card tagged English + Chinese; empirically handles Cyrillic correctly on the Pro model), the pipeline OCR (109 languages via PaddleOCR, documented-safe for any non-Latin script), the hybrid auto-router, and split-tier deploys. See [Picking a backend](/mineru-runpod/guides/choosing-gpu/#picking-a-backend).
 
 ## Next steps
 
 There are two paths from here, depending on whether you want to run the official image as-is or run your own customised build:
 
-**Easiest — deploy from the RunPod Hub.** Sign up via [this referral link](https://runpod.io?ref=31jdfpnq), open **The Hub → Serverless repos**, find `runpod-mineru`, click Deploy. Grab the endpoint id and you're parsing PDFs.
+**Easiest — deploy from the RunPod Hub.** Sign up via [this referral link](https://runpod.io?ref=31jdfpnq), open **The Hub → Serverless repos**, find `mineru-runpod`, click Deploy. Grab the endpoint id and you're parsing PDFs.
 
-**Customise — fork and auto-build.** Fork [the repo](https://github.com/sergeyshmakov/runpod-mineru), then in the RunPod dashboard do **The Hub → Serverless repos → Import Git Repository** pointed at your fork. RunPod builds the image on every push to `main`. Use this path if you need to pin different MinerU / vLLM versions or modify `handler.py`.
+**Customise — fork and auto-build.** Fork [the repo](https://github.com/sergeyshmakov/mineru-runpod), then in the RunPod dashboard do **The Hub → Serverless repos → Import Git Repository** pointed at your fork. RunPod builds the image on every push to `main`. Use this path if you need to pin different MinerU / vLLM versions or modify `handler.py`.
 
-Either way, total wall time is roughly 10 minutes assuming RunPod has spare capacity. See the [project README's Deploy section](https://github.com/sergeyshmakov/runpod-mineru#deploy) for the full step-by-step.
+Either way, total wall time is roughly 10 minutes assuming RunPod has spare capacity. See the [project README's Deploy section](https://github.com/sergeyshmakov/mineru-runpod#deploy) for the full step-by-step.

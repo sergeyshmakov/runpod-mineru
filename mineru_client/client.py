@@ -1,4 +1,4 @@
-"""Python client for the runpod-mineru serverless service.
+"""Python client for the mineru-runpod serverless service.
 
 Stateless except for the endpoint id + api key. Safe to share across threads.
 """
@@ -21,9 +21,9 @@ class MineruClientError(RuntimeError):
 
 
 class MineruClient:
-    """Wraps a single deployed runpod-mineru endpoint.
+    """Wraps a single deployed mineru-runpod endpoint.
 
-    The handler API is documented in the runpod-mineru repo's handler.py.
+    The handler API is documented in the mineru-runpod repo's handler.py.
     """
 
     def __init__(self, endpoint_id: str, api_key: str | None = None) -> None:

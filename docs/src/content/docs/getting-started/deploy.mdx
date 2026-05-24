@@ -1,13 +1,13 @@
 ---
 title: Deploy
-description: Three deploy paths for runpod-mineru. Hub one-click for most users, fork-and-build for customization, BYO image for full control.
+description: Three deploy paths for mineru-runpod. Hub one-click for most users, fork-and-build for customization, BYO image for full control.
 ---
 
-There are three ways to get a runpod-mineru endpoint running. Pick the one that matches what you need to control.
+There are three ways to get a mineru-runpod endpoint running. Pick the one that matches what you need to control.
 
 ## Option A — Deploy from the RunPod Hub (easiest)
 
-This repo is published as a public Hub template. In the RunPod dashboard go to **The Hub → Serverless repos**, find `runpod-mineru`, click Deploy. RunPod builds the image on your account, you pick a GPU pool, and you get an endpoint id. No fork, no clone, no local setup.
+This repo is published as a public Hub template. In the RunPod dashboard go to **The Hub → Serverless repos**, find `mineru-runpod`, click Deploy. RunPod builds the image on your account, you pick a GPU pool, and you get an endpoint id. No fork, no clone, no local setup.
 
 This is the recommended path if your goal is parsing PDFs, not customising the worker.
 
@@ -40,7 +40,7 @@ Subsequent pushes to `main` on your fork rebuild the image automatically; the en
 For full control over the Docker layer, build and push to Docker Hub or GHCR yourself, then:
 
 ```powershell
-python deploy.py --image yourhandle/runpod-mineru:0.1
+python deploy.py --image yourhandle/mineru-runpod:0.1
 ```
 
 This skips RunPod's auto-build entirely. Use it when you need custom base images, multi-stage builds, or air-gapped registries.
@@ -58,8 +58,8 @@ This skips RunPod's auto-build entirely. Use it when you need custom base images
 
 Override any of these via flags to `deploy.py` (e.g. `--gpu-ids ADA_24 --workers-max 5`).
 
-See [Choosing a GPU](/runpod-mineru/guides/choosing-gpu/) for when to deviate from the default 24 GB pool.
+See [Choosing a GPU](/mineru-runpod/guides/choosing-gpu/) for when to deviate from the default 24 GB pool.
 
 ## What you get after deploy
 
-An endpoint id like `abcdef123456` that accepts the documented [job input contract](/runpod-mineru/reference/api/) via RunPod's standard `/run` and `/runsync` endpoints. From there, see [Clients](/runpod-mineru/getting-started/clients/) for how to actually call it from your code.
+An endpoint id like `abcdef123456` that accepts the documented [job input contract](/mineru-runpod/reference/api/) via RunPod's standard `/run` and `/runsync` endpoints. From there, see [Clients](/mineru-runpod/getting-started/clients/) for how to actually call it from your code.

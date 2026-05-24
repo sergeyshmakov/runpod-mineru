@@ -1,4 +1,4 @@
-"""mineru_client — thin Python wrapper around a deployed runpod-mineru endpoint.
+"""mineru_client — thin Python wrapper around a deployed mineru-runpod endpoint.
 
 Usage:
 

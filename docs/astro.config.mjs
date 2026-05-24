@@ -3,14 +3,14 @@ import starlight from "@astrojs/starlight";
 import { defineConfig } from "astro/config";
 import starlightBlog from "starlight-blog";
 
-const REPO_URL = "https://github.com/sergeyshmakov/runpod-mineru";
+const REPO_URL = "https://github.com/sergeyshmakov/mineru-runpod";
 
 export default defineConfig({
 	site: "https://sergeyshmakov.github.io",
-	base: "/runpod-mineru",
+	base: "/mineru-runpod",
 	integrations: [
 		starlight({
-			title: "runpod-mineru",
+			title: "mineru-runpod",
 			description:
 				"Open-source template to deploy MinerU (3.1 runtime, MinerU 2.5 Pro VLM) onto RunPod Serverless in two clicks. Self-hosted endpoint, scales to zero, ~$0.0003 per page on 24 GB Ampere.",
 			favicon: "/favicon.png",
@@ -70,7 +70,7 @@ export default defineConfig({
 				},
 				{
 					tag: "meta",
-					attrs: { property: "og:image", content: "/runpod-mineru/og-default.png" },
+					attrs: { property: "og:image", content: "/mineru-runpod/og-default.png" },
 				},
 				{
 					tag: "meta",

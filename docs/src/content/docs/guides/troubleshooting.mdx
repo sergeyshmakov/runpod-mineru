@@ -85,7 +85,7 @@ CUDA error (...flash-attention/hopper/flash_fwd_launch_template.h:188): invalid 
 
 **Why we can't just bump vllm**: MinerU 3.1.x's pyproject pins `vllm>=0.10.1.1,<0.12`. The first vllm version with explicit Blackwell support is `v0.20.0` ("sm_120 / Jetson Thor added to CUDA 13.0 build targets"), with broader Blackwell coverage in `v0.21.0`. Both are outside MinerU's vllm-version constraint. Until MinerU loosens that pin, the VLM backend cannot run on Blackwell SM120 cards. The original v0.6.6 → v0.11.2 bump did not change this because v0.11.2 also predates Blackwell support.
 
-**Fix**: keep the default `gpuIds: "AMPERE_24,ADA_24,AMPERE_48"` — all unambiguously pre-Blackwell. If you've manually opted into `ADA_48_PRO`, that pool can mix in Blackwell SKUs since RunPod groups them under the same pool name — remove it from your endpoint's GPU pool list. For workloads that need a 48 GB Ada-or-newer card, the `pipeline` backend doesn't use xformers/flash-attn and is unaffected, so it runs on Blackwell fine; only the VLM/hybrid backends crash. See [Choosing a GPU](/runpod-mineru/guides/choosing-gpu/#a-note-on-ada_48_pro-and-blackwell) for the GPU-pool background.
+**Fix**: keep the default `gpuIds: "AMPERE_24,ADA_24,AMPERE_48"` — all unambiguously pre-Blackwell. If you've manually opted into `ADA_48_PRO`, that pool can mix in Blackwell SKUs since RunPod groups them under the same pool name — remove it from your endpoint's GPU pool list. For workloads that need a 48 GB Ada-or-newer card, the `pipeline` backend doesn't use xformers/flash-attn and is unaffected, so it runs on Blackwell fine; only the VLM/hybrid backends crash. See [Choosing a GPU](/mineru-runpod/guides/choosing-gpu/#a-note-on-ada_48_pro-and-blackwell) for the GPU-pool background.
 
 ## "Pod scaled to zero" but the next job has a noticeable cold start
 
@@ -122,7 +122,7 @@ CUDA error (...flash-attention/hopper/flash_fwd_launch_template.h:188): invalid 
 - **Reduce concurrency** (`concurrencyModifier` on the endpoint) so fewer pages are in flight at once
 - **For one-off huge docs**, set `backend: "pipeline"` per-job — same worker can handle small docs with VLM and giant docs with pipeline
 
-See [Choosing a GPU](/runpod-mineru/guides/choosing-gpu/) for the VRAM math.
+See [Choosing a GPU](/mineru-runpod/guides/choosing-gpu/) for the VRAM math.
 
 ## `unexpected handler return type: <class 'NoneType'>` after a successful parse
 
@@ -196,5 +196,5 @@ If your symptom isn't here:
 
 1. Pull the worker logs from RunPod's dashboard — look for `[mineru-worker]` lines and any tracebacks
 2. Check the `debug` block in the response
-3. Open a bug report — the [issue template](https://github.com/sergeyshmakov/runpod-mineru/issues/new?template=bug_report.yml) asks for the response and the GPU pool, both of which let you diagnose 90% of issues at a glance
+3. Open a bug report — the [issue template](https://github.com/sergeyshmakov/mineru-runpod/issues/new?template=bug_report.yml) asks for the response and the GPU pool, both of which let you diagnose 90% of issues at a glance
 4. **Parsing accuracy issues** (output is structurally fine but wrong content) belong upstream at [opendatalab/MinerU](https://github.com/opendatalab/MinerU/issues) — they're MinerU's responsibility, not this template's

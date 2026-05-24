@@ -125,7 +125,7 @@ Each upload uses key `{BUCKET_PREFIX}{basename}-{uuid}.tar.gz` — the UUID prev
 
 Default is **3600 seconds (1 hour)**. Long enough for any human or service to fetch the tarball but short enough that a leaked URL stops working before it's interesting.
 
-If you need a longer lifetime, fork the worker and bump `_S3_PRESIGN_TTL_SECONDS` in [`handler.py`](https://github.com/sergeyshmakov/runpod-mineru/blob/main/handler.py). I haven't exposed this as a per-job knob because the default is rarely too short — a job that needs >1 h to fetch its output usually has a different bug.
+If you need a longer lifetime, fork the worker and bump `_S3_PRESIGN_TTL_SECONDS` in [`handler.py`](https://github.com/sergeyshmakov/mineru-runpod/blob/main/handler.py). I haven't exposed this as a per-job knob because the default is rarely too short — a job that needs >1 h to fetch its output usually has a different bug.
 
 ### Costs
 

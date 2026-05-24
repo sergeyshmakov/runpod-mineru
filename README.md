@@ -1,7 +1,7 @@
-# runpod-mineru
+# mineru-runpod
 
 <!-- badges: ci, license, python, runpod -->
-[![CI](https://github.com/sergeyshmakov/runpod-mineru/actions/workflows/ci.yml/badge.svg)](https://github.com/sergeyshmakov/runpod-mineru/actions/workflows/ci.yml)
+[![CI](https://github.com/sergeyshmakov/mineru-runpod/actions/workflows/ci.yml/badge.svg)](https://github.com/sergeyshmakov/mineru-runpod/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](pyproject.toml)
 [![MinerU](https://img.shields.io/badge/MinerU-3.1-purple)](https://github.com/opendatalab/MinerU)
@@ -10,7 +10,7 @@
 
 Serverless [MinerU](https://github.com/opendatalab/MinerU) PDF parser on [RunPod](https://runpod.io?ref=31jdfpnq). MinerU 3.1.x runtime with the `MinerU2.5-Pro-2604-1.2B` VLM. Scales to zero, ~$0.0003 per page on 24 GB Ampere serverless, ten minutes from sign-up to first parse.
 
-**📚 [Docs](https://sergeyshmakov.github.io/runpod-mineru/)**  ·  **🚀 [Deploy on RunPod Hub](https://runpod.io?ref=31jdfpnq)**  ·  **📝 [Blog](https://sergeyshmakov.github.io/runpod-mineru/blog/)**
+**📚 [Docs](https://sergeyshmakov.github.io/mineru-runpod/)**  ·  **🚀 [Deploy on RunPod Hub](https://runpod.io?ref=31jdfpnq)**  ·  **📝 [Blog](https://sergeyshmakov.github.io/mineru-runpod/blog/)**
 
 ## 30-second taste
 
@@ -53,7 +53,7 @@ Accepts PDF, image (PNG/JPEG/GIF/BMP/TIFF/WebP), DOCX, PPTX, XLSX. Three return 
 A small Python wrapper that lives in this repo. Best for prototyping and single-user scripts.
 
 ```powershell
-pip install "mineru-client @ git+https://github.com/sergeyshmakov/runpod-mineru@v1.1.0"
+pip install "mineru-client @ git+https://github.com/sergeyshmakov/mineru-runpod@v1.1.0"
 ```
 
 ```python
@@ -64,7 +64,7 @@ result = client.parse_document(file_url="https://example.com/report.pdf")
 
 ### B. Production with RunPod SDK / HTTP
 
-For high-throughput, async, or non-Python callers. Hit the endpoint directly using the documented [JSON payload contract](https://sergeyshmakov.github.io/runpod-mineru/reference/api/).
+For high-throughput, async, or non-Python callers. Hit the endpoint directly using the documented [JSON payload contract](https://sergeyshmakov.github.io/mineru-runpod/reference/api/).
 
 ```python
 import runpod
@@ -73,11 +73,11 @@ endpoint = runpod.Endpoint("<endpoint-id>")
 result = endpoint.run_sync({"input": {"file_url": "https://example.com/report.pdf"}})
 ```
 
-Prototype with A; switch to B once you need async, retries, or multi-language callers. See [Clients](https://sergeyshmakov.github.io/runpod-mineru/getting-started/clients/) for the full comparison.
+Prototype with A; switch to B once you need async, retries, or multi-language callers. See [Clients](https://sergeyshmakov.github.io/mineru-runpod/getting-started/clients/) for the full comparison.
 
 ## API at a glance
 
-Full reference: [docs site](https://sergeyshmakov.github.io/runpod-mineru/reference/api/) and the docstring atop [`handler.py`](handler.py). Summary table:
+Full reference: [docs site](https://sergeyshmakov.github.io/mineru-runpod/reference/api/) and the docstring atop [`handler.py`](handler.py). Summary table:
 
 | Field | Required | Default | Notes |
 |---|---|---|---|
@@ -107,7 +107,7 @@ Parsing accuracy is MinerU's domain; their published [OmniDocBench](https://gith
 
 <sub>Source: [MinerU2.5-Pro-2604-1.2B model card](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B) and the [MinerU 2.5 technical report](https://arxiv.org/abs/2604.04771).</sub>
 
-| | runpod-mineru (this) | Marker | GROBID | Nougat |
+| | mineru-runpod (this) | Marker | GROBID | Nougat |
 |---|---|---|---|---|
 | Scale-to-zero | ✅ ready to use | ⚠️ possible, needs extra setup | ❌ (always-on) | ❌ |
 | GPU support | GPU only | CPU or GPU | CPU | GPU required |
@@ -127,12 +127,12 @@ The license row matters most for production SaaS. Marker pairs GPL-3.0 code with
 
 Everything below the surface lives on the docs site:
 
-- **[Overview](https://sergeyshmakov.github.io/runpod-mineru/getting-started/overview/)** — what it is, who it's for, architecture
-- **[Deploy](https://sergeyshmakov.github.io/runpod-mineru/getting-started/deploy/)** — Hub one-click, fork-and-build, or BYO image
-- **[Clients](https://sergeyshmakov.github.io/runpod-mineru/getting-started/clients/)** — Python `MineruClient` vs. direct RunPod SDK
-- **[Choosing a GPU](https://sergeyshmakov.github.io/runpod-mineru/guides/choosing-gpu/)** — workload-to-pool map, when to bump VRAM
-- **[API reference](https://sergeyshmakov.github.io/runpod-mineru/reference/api/)** — JSON payload contract, response shapes, validation rules
-- **[Blog](https://sergeyshmakov.github.io/runpod-mineru/blog/)** — launch posts and project notes
+- **[Overview](https://sergeyshmakov.github.io/mineru-runpod/getting-started/overview/)** — what it is, who it's for, architecture
+- **[Deploy](https://sergeyshmakov.github.io/mineru-runpod/getting-started/deploy/)** — Hub one-click, fork-and-build, or BYO image
+- **[Clients](https://sergeyshmakov.github.io/mineru-runpod/getting-started/clients/)** — Python `MineruClient` vs. direct RunPod SDK
+- **[Choosing a GPU](https://sergeyshmakov.github.io/mineru-runpod/guides/choosing-gpu/)** — workload-to-pool map, when to bump VRAM
+- **[API reference](https://sergeyshmakov.github.io/mineru-runpod/reference/api/)** — JSON payload contract, response shapes, validation rules
+- **[Blog](https://sergeyshmakov.github.io/mineru-runpod/blog/)** — launch posts and project notes
 
 ## Contributing
 

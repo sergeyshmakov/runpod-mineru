@@ -1,5 +1,5 @@
 # Defines the `mineru_client` Python package that callers `pip install -e` to
-# talk to a deployed runpod-mineru endpoint. Consumers don't need MinerU or
+# talk to a deployed mineru-runpod endpoint. Consumers don't need MinerU or
 # CUDA — just the runpod SDK.
 
 [build-system]
@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mineru-client"
 version = "1.1.15"
-description = "Python client for the runpod-mineru serverless service"
+description = "Python client for the mineru-runpod serverless service"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [

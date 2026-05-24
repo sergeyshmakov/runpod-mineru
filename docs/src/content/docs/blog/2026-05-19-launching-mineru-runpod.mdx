@@ -18,7 +18,7 @@ If you're building a RAG pipeline, a document indexer, or anything else that ing
 
 MinerU 2.5 is genuinely state-of-the-art for PDF → Markdown / JSON. See the [technical report on arxiv](https://arxiv.org/abs/2604.04771), the [opendatalab/MinerU repo](https://github.com/opendatalab/MinerU), and the [1.2B model card on HuggingFace](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B). The license relaxed to Apache 2.0 recently. RunPod's serverless platform scales to zero when nothing is calling. The obvious move is to wire those two together.
 
-Here's the [open-source repo I shipped](https://github.com/sergeyshmakov/runpod-mineru). MIT-licensed, ~30 files, takes about 10 minutes end-to-end.
+Here's the [open-source repo I shipped](https://github.com/sergeyshmakov/mineru-runpod). MIT-licensed, ~30 files, takes about 10 minutes end-to-end.
 
 ## The economics
 
@@ -40,8 +40,8 @@ The trick is **scale-to-zero**. RunPod bills per-second; when no one's calling, 
 ### 2. Fork the repo
 
 ```sh
-gh repo fork sergeyshmakov/runpod-mineru --clone
-cd runpod-mineru
+gh repo fork sergeyshmakov/mineru-runpod --clone
+cd mineru-runpod
 ```
 
 The repo's small: `Dockerfile`, `handler.py`, a Python client library, three GitHub Actions workflows, and Hub metadata in `.runpod/`. No magic, no proprietary glue.
@@ -136,7 +136,7 @@ I'm running it in production for a document indexer right now. If you build some
 
 ---
 
-If this saved you time, the easiest way to say thanks is [signing up for RunPod through this link](https://runpod.io?ref=31jdfpnq). Star the [repo on GitHub](https://github.com/sergeyshmakov/runpod-mineru) for updates.
+If this saved you time, the easiest way to say thanks is [signing up for RunPod through this link](https://runpod.io?ref=31jdfpnq). Star the [repo on GitHub](https://github.com/sergeyshmakov/mineru-runpod) for updates.
 
 ---
 

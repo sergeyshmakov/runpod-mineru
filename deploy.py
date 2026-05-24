@@ -1,4 +1,4 @@
-"""Create a runpod-mineru serverless endpoint.
+"""Create a mineru-runpod serverless endpoint.
 
 Reads RUNPOD_API_KEY from environment or .env. Every endpoint knob is exposed
 as a CLI flag so the same script works for any consumer with different
@@ -56,7 +56,7 @@ def _build_parser() -> argparse.ArgumentParser:
     src.add_argument(
         "--image",
         default=os.environ.get("MINERU_IMAGE_REF"),
-        help="Docker image reference (creates a template). e.g. docker.io/me/runpod-mineru:0.1",
+        help="Docker image reference (creates a template). e.g. docker.io/me/mineru-runpod:0.1",
     )
     src.add_argument(
         "--template-id",

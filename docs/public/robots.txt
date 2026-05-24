@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sergeyshmakov.github.io/runpod-mineru/sitemap-index.xml
+Sitemap: https://sergeyshmakov.github.io/mineru-runpod/sitemap-index.xml

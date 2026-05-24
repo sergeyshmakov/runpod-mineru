@@ -17,7 +17,7 @@ If your RunPod serverless worker logs say `done` but your client raises `MineruC
 
 The fix: set `return: "s3"` on the job, configure four env vars on the endpoint, and point them at a Cloudflare R2 bucket. The worker uploads the result to R2 and returns a small presigned URL. Your client downloads from R2 directly. No gateway cap in the path.
 
-I hit this on an 82-page Cyrillic fiscal report (30 MB input, ~25 MB output with embedded images) using my open-source [runpod-mineru](https://github.com/sergeyshmakov/runpod-mineru) template. Two retries via `return: "inline"` and `return: "tarball_b64"` both failed the same way. R2 mode worked first try in 211 s. The rest of this post is the debugging trail, the env-var recipe, and a few gotchas I wish someone had written down.
+I hit this on an 82-page Cyrillic fiscal report (30 MB input, ~25 MB output with embedded images) using my open-source [mineru-runpod](https://github.com/sergeyshmakov/mineru-runpod) template. Two retries via `return: "inline"` and `return: "tarball_b64"` both failed the same way. R2 mode worked first try in 211 s. The rest of this post is the debugging trail, the env-var recipe, and a few gotchas I wish someone had written down.
 
 ## Why does `unexpected handler return type: <class 'NoneType'>` happen on a successful parse?
 
@@ -48,7 +48,7 @@ The two directions:
 
 The request cap is in [RunPod's docs](https://docs.runpod.io/serverless/endpoints/operations) and is widely discussed. The response cap is mentioned only in passing. I found three open issues from other users hitting the same symptom and not realising what it was, so this post is partly to make that searchable.
 
-The practical threshold for runpod-mineru: anything past ~50 multi-page documents with embedded images. Pure-text PDFs are fine for longer. Image-heavy PDFs hit the cap sooner.
+The practical threshold for mineru-runpod: anything past ~50 multi-page documents with embedded images. Pure-text PDFs are fine for longer. Image-heavy PDFs hit the cap sooner.
 
 ## Does `return: "tarball_b64"` get around the cap?
 
@@ -156,15 +156,15 @@ No. The S3 upload happens at the end of the parse, not the beginning. The handle
 
 ### How big can the R2-uploaded tarball be?
 
-Effectively unlimited for runpod-mineru workloads. R2 supports multipart uploads up to 5 TB per object. You will hit the worker's `executionTimeoutMs` long before you hit R2's per-object limit.
+Effectively unlimited for mineru-runpod workloads. R2 supports multipart uploads up to 5 TB per object. You will hit the worker's `executionTimeoutMs` long before you hit R2's per-object limit.
 
 ## Where to next
 
 If you've shipped a multi-page PDF pipeline on RunPod and you're not using `return: "s3"`, you'll hit the gateway cap eventually. Set it up before you need it; the cost is ten minutes of env-var configuration and possibly zero dollars per month at indie volumes.
 
-If you're new to the template, the [getting-started guide](/runpod-mineru/getting-started/overview/) walks through the full deploy in about ten minutes. If you're already deployed and want context on backend choice or GPU sizing, [Choosing a GPU](/runpod-mineru/guides/choosing-gpu/) covers when the default `AMPERE_24` is enough and when to opt up.
+If you're new to the template, the [getting-started guide](/mineru-runpod/getting-started/overview/) walks through the full deploy in about ten minutes. If you're already deployed and want context on backend choice or GPU sizing, [Choosing a GPU](/mineru-runpod/guides/choosing-gpu/) covers when the default `AMPERE_24` is enough and when to opt up.
 
-If this saved you time, the easiest way to say thanks is [signing up for RunPod through this referral link](https://runpod.io?ref=31jdfpnq). Star the [repo on GitHub](https://github.com/sergeyshmakov/runpod-mineru) for updates.
+If this saved you time, the easiest way to say thanks is [signing up for RunPod through this referral link](https://runpod.io?ref=31jdfpnq). Star the [repo on GitHub](https://github.com/sergeyshmakov/mineru-runpod) for updates.
 
 ---
 

@@ -23,7 +23,7 @@ The output shape is the same regardless of input format: Markdown + `content_lis
 
 ## When format matters for the backend choice
 
-The five MinerU backends (see [Picking a backend](/runpod-mineru/guides/choosing-gpu/#picking-a-backend)) handle the input pool differently:
+The five MinerU backends (see [Picking a backend](/mineru-runpod/guides/choosing-gpu/#picking-a-backend)) handle the input pool differently:
 
 - **`vlm-auto-engine`** (default): MinerU's end-to-end VLM. Best for **PDF**. MinerU's README attaches the [109-language claim](https://github.com/opendatalab/MinerU#supported-languages) specifically to the pipeline backend's OCR layer; the VLM's [model card](https://huggingface.co/opendatalab/MinerU2.5-Pro-2604-1.2B) carries only `English` and `Chinese` HuggingFace language tags. **Verified empirically on Russian (2026-05-21)**: the Pro VLM does produce real Cyrillic output despite the limited model-card tags. Coverage of other non-Latin scripts (Arabic, Devanagari, etc.) is undocumented and unverified by us; if you hit transliteration on those, `pipeline` with the matching script-family `lang` code is the documented-safe alternative.
 - **`pipeline`**: native multi-language OCR (109 languages). Best for **images** and **scanned PDFs without an embedded text layer**. Respects the `lang` parameter (script-family codes — see below).
@@ -127,7 +127,7 @@ Returns Markdown tables (one per sheet) in `content_list`.
 | `file_url` | No hard cap; the worker downloads with a 120 s timeout |
 | `volume_path` | No hard cap; only limited by the network volume's free space |
 
-For multi-hundred-MB books or large image archives, prefer `file_url` (signed S3 URL is cheapest) or pre-stage on a network volume — see [Network volumes](/runpod-mineru/guides/network-volumes/).
+For multi-hundred-MB books or large image archives, prefer `file_url` (signed S3 URL is cheapest) or pre-stage on a network volume — see [Network volumes](/mineru-runpod/guides/network-volumes/).
 
 ## Page selection (PDF only)
 

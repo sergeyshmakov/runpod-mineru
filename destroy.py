@@ -1,4 +1,4 @@
-"""Tear down a runpod-mineru endpoint and (optionally) its template.
+"""Tear down a mineru-runpod endpoint and (optionally) its template.
 
 Reads RUNPOD_ENDPOINT_ID + MINERU_TEMPLATE_ID from environment / .env, or
 takes them on the CLI.

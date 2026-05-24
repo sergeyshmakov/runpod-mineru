@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please use [GitHub Security Advisories](https://github.com/sergeyshmakov/runpod-mineru/security/advisories/new) to report security issues privately. Do **not** open public issues for security problems.
+Please use [GitHub Security Advisories](https://github.com/sergeyshmakov/mineru-runpod/security/advisories/new) to report security issues privately. Do **not** open public issues for security problems.
 
 You should expect an initial response within 5 working days.
 

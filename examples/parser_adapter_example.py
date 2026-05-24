@@ -113,7 +113,7 @@ class ParserAdapter(ABC):
 # -----------------------------------------------------------------------------
 
 class MineruParserAdapter(ParserAdapter):
-    """Wraps the runpod-mineru service. Constructs ParsedDocument from MinerU's
+    """Wraps the mineru-runpod service. Constructs ParsedDocument from MinerU's
     `content_list_v2.json` entries plus its inline images."""
 
     def __init__(self, *, endpoint_id: str, api_key: str | None = None) -> None:

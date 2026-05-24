@@ -1,4 +1,4 @@
-# Contributing to runpod-mineru
+# Contributing to mineru-runpod
 
 Thanks for considering a contribution. This project is intentionally a thin wrapper — most of the actual document-parsing work happens upstream in [MinerU](https://github.com/opendatalab/MinerU). Please route your issue to the right place:
 

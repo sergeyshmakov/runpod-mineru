@@ -30,7 +30,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const RSS_PATH = resolve(__dirname, "..", "dist", "blog", "rss.xml");
 
 const SITE = "https://sergeyshmakov.github.io";
-const BASE = "/runpod-mineru";
+const BASE = "/mineru-runpod";
 const FEED_CHANNEL_LINK = `${SITE}${BASE}/blog/`;
 const FEED_SELF_HREF = `${SITE}${BASE}/blog/rss.xml`;
 const AUTHOR_NAME = "Sergei Shmakov";

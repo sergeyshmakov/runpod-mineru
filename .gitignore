@@ -18,6 +18,7 @@ yarn.lock
 .mcp.json
 .playwright-mcp
 .claude
+.serena
 
 tmp-screenshots
 tmp-scripts/

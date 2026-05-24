@@ -5,7 +5,7 @@ description: When and how to use a RunPod network volume to pre-stage input corp
 
 A [RunPod network volume](https://docs.runpod.io/serverless/storage/overview) is a persistent block-storage device that gets mounted into every worker of an endpoint at the same path (typically `/runpod-volume`). Survives scale-to-zero. Charged per-GB-month, not per-second like compute.
 
-For runpod-mineru, network volumes solve three concrete problems:
+For mineru-runpod, network volumes solve three concrete problems:
 
 1. **Avoid re-downloading large input corpora** on each job
 2. **Cache MinerU weights** so cold starts skip the HuggingFace fetch
@@ -56,7 +56,7 @@ If you'd rather slim the image and rely on RunPod's Cached Models feature for th
 
 If a downstream pipeline (a follow-up job that does embeddings, indexing, classification) needs to read the parse output, you have three options:
 
-1. **`return: "s3"` + S3 bucket** — see [Output modes](/runpod-mineru/guides/output-modes/). Best for cross-region or multi-tenant pipelines.
+1. **`return: "s3"` + S3 bucket** — see [Output modes](/mineru-runpod/guides/output-modes/). Best for cross-region or multi-tenant pipelines.
 2. **`return: "tarball_b64"` + caller persists to its own store** — fine if the caller already has a place to put things.
 3. **Network volume + writes from handler** — requires forking the handler to add a write step. Useful for tight self-contained pipelines but adds complexity.
 
