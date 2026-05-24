@@ -1,3 +1,9 @@
+## [1.1.17](https://github.com/sergeyshmakov/mineru-runpod/compare/v1.1.16...v1.1.17) (2026-05-24)
+
+### Bug Fixes
+
+* trying to add hub.json for hub ([1f38d12](https://github.com/sergeyshmakov/mineru-runpod/commit/1f38d129653fc1c55e55e8d67fe8b2a588ebc40c))
+
 ## [1.1.16](https://github.com/sergeyshmakov/mineru-runpod/compare/v1.1.15...v1.1.16) (2026-05-24)
 
 ### Bug Fixes
