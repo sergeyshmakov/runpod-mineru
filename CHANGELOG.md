@@ -1,3 +1,9 @@
+## [1.1.26](https://github.com/sergeyshmakov/mineru-runpod/compare/v1.1.25...v1.1.26) (2026-05-25)
+
+### Bug Fixes
+
+* shorten hub.json descriptions to stay under varchar 191 ([5a5fe47](https://github.com/sergeyshmakov/mineru-runpod/commit/5a5fe47aea8afab961c6a711a9dcbeee14be50a2))
+
 ## [1.1.25](https://github.com/sergeyshmakov/mineru-runpod/compare/v1.1.24...v1.1.25) (2026-05-25)
 
 ### Bug Fixes
