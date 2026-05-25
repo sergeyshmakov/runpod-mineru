@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/sergeyshmakov/mineru-runpod/compare/v1.1.27...v1.2.0) (2026-05-25)
+
+### Features
+
+* add structural logs support ([d864d8a](https://github.com/sergeyshmakov/mineru-runpod/commit/d864d8a2f0cac7f53aaaf7eaa8b02d753d9b3119))
+
 ## [1.1.27](https://github.com/sergeyshmakov/mineru-runpod/compare/v1.1.26...v1.1.27) (2026-05-25)
 
 ### Bug Fixes
