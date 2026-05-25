@@ -1,3 +1,9 @@
+## [1.1.27](https://github.com/sergeyshmakov/mineru-runpod/compare/v1.1.26...v1.1.27) (2026-05-25)
+
+### Bug Fixes
+
+* refine hub descriptions ([ca93e91](https://github.com/sergeyshmakov/mineru-runpod/commit/ca93e91753c3807bf9bc535281ba5f86ec76af38))
+
 ## [1.1.26](https://github.com/sergeyshmakov/mineru-runpod/compare/v1.1.25...v1.1.26) (2026-05-25)
 
 ### Bug Fixes

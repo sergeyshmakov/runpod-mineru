@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mineru-client"
-version = "1.1.26"
+version = "1.1.27"
 description = "Python client for the mineru-runpod serverless service"
 readme = "README.md"
 requires-python = ">=3.9"
