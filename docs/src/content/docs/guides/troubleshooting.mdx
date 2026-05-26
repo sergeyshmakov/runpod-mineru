@@ -138,7 +138,7 @@ If you're tracking *why* a cold start takes ~110 s, here's the live measurement 
 |---|---|---|
 | Worker boot + 7 fitness checks (CUDA, GPU, network, disk, memory) | ~3 s | `--- Starting Serverless Worker ---` → `All fitness checks passed.` |
 | Queue dispatch + RunPod SDK ready | ~5 s | `All fitness checks passed.` → `Started.` |
-| MinerU lazy import → `Using vllm-async-engine` selection | <1 s | `Started.` → `mineru.utils.engine_utils:get_vlm_engine — Using vllm-async-engine` |
+| MinerU lazy import → `Using vllm-async-engine` selection | \<1 s | `Started.` → `mineru.utils.engine_utils:get_vlm_engine — Using vllm-async-engine` |
 | vLLM engine config + model path resolve (`HF_HUB_OFFLINE` lookup, arch detection) | ~19 s | → `arg_utils.py:592 HF_HUB_OFFLINE is True` |
 | Model weight load (1 safetensors shard, 2.16 GiB → VRAM) | ~21 s | `gpu_model_runner.py:3338 Model loading took 2.1601 GiB memory and 21.4 seconds` |
 | `torch.compile` (Dynamo + Inductor, dynamic shape) | ~25 s | `monitor.py:34 torch.compile takes 25.54 s in total` |

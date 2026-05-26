@@ -9,7 +9,8 @@
 		"build": "astro build",
 		"postbuild": "node scripts/postbuild-rss.mjs",
 		"preview": "astro preview",
-		"astro": "astro"
+		"astro": "astro",
+		"check-links": "remark --ext mdx --frail --quiet --no-stdout src/content/"
 	},
 	"dependencies": {
 		"@astrojs/sitemap": "^3.5.0",
@@ -17,5 +18,11 @@
 		"astro": "^6.0.0",
 		"sharp": "^0.34.0",
 		"starlight-blog": "^0.26.1"
+	},
+	"devDependencies": {
+		"remark-cli": "^12.0.1",
+		"remark-frontmatter": "^5.0.0",
+		"remark-mdx": "^3.1.1",
+		"remark-validate-links": "^13.1.0"
 	}
 }
