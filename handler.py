@@ -34,9 +34,6 @@ from worker import parse as _parse
 from worker import schema as _schema
 
 
-logger = _logging.get_logger("mineru-worker")
-
-
 # -----------------------------------------------------------------------------
 # Graceful shutdown
 # -----------------------------------------------------------------------------
@@ -53,7 +50,7 @@ _shutting_down = threading.Event()
 
 
 def _on_sigterm(signum: int, frame: Any) -> None:  # noqa: ARG001
-    logger.warning("sigterm received, draining current job")
+    _logging.warning("sigterm received, draining current job")
     _shutting_down.set()
 
 
@@ -64,7 +61,7 @@ def _on_sigterm(signum: int, frame: Any) -> None:  # noqa: ARG001
 try:
     signal.signal(signal.SIGTERM, _on_sigterm)
 except (ValueError, OSError) as e:  # pragma: no cover — non-main-thread case
-    logger.warning("could not install sigterm handler", extra={"error": repr(e)})
+    _logging.warning("could not install sigterm handler", error=repr(e))
 
 
 def _check_shutdown() -> None:
@@ -148,7 +145,7 @@ def _maybe_progress(job: dict, data: dict) -> None:
     try:
         runpod.serverless.progress_update(job, data)
     except Exception as e:  # noqa: BLE001
-        logger.debug("progress_update failed", extra={"error": repr(e)})
+        _logging.debug("progress_update failed", error=repr(e))
 
 
 def _build_debug(phase_ms: dict[str, int], gpu_info: dict[str, Any], **extra: Any) -> dict[str, Any]:
@@ -161,7 +158,7 @@ def _build_debug(phase_ms: dict[str, int], gpu_info: dict[str, Any], **extra: An
 
 
 async def _handle_probe(started: float, gpu_info: dict[str, Any], phase_ms: dict[str, int]) -> dict[str, Any]:
-    logger.info("probe job: dumping filesystem layout")
+    _logging.info("probe job: dumping filesystem layout")
     return {
         "ok": True,
         "elapsed_seconds": round(time.monotonic() - started, 2),
@@ -185,16 +182,14 @@ async def _handle_parse(
     end_page = None if end_page_val is None or end_page_val < 0 else int(end_page_val)
     backend = cleaned["backend"]
 
-    logger.info(
+    _logging.info(
         "starting job",
-        extra={
-            "backend": backend,
-            "lang": cleaned["lang"],
-            "start_page": cleaned["start_page"],
-            "end_page": end_page,
-            "gpu_name": gpu_info.get("name"),
-            "compute_capability": gpu_info.get("compute_capability"),
-        },
+        backend=backend,
+        lang=cleaned["lang"],
+        start_page=cleaned["start_page"],
+        end_page=end_page,
+        gpu_name=gpu_info.get("name"),
+        compute_capability=gpu_info.get("compute_capability"),
     )
 
     _check_shutdown()
@@ -275,22 +270,18 @@ async def _handle_parse(
         bumped_pages = pages_requested if pages_requested > 0 else 0
         if _record_job(bumped_pages):
             response["refresh_worker"] = True
-            logger.info(
+            _logging.info(
                 "refresh threshold crossed; signaling worker recycle",
-                extra={
-                    "jobs_processed": _jobs_processed,
-                    "pages_processed_total": _pages_processed_total,
-                },
+                jobs_processed=_jobs_processed,
+                pages_processed_total=_pages_processed_total,
             )
 
-        logger.info(
+        _logging.info(
             "done",
-            extra={
-                "elapsed_seconds": response["elapsed_seconds"],
-                "phase_ms": phase_ms,
-                "model_dir": response["debug"]["model_dir"],
-                "refresh_worker": response.get("refresh_worker", False),
-            },
+            elapsed_seconds=response["elapsed_seconds"],
+            phase_ms=phase_ms,
+            model_dir=response["debug"]["model_dir"],
+            refresh_worker=response.get("refresh_worker", False),
         )
         return response
 
@@ -317,13 +308,11 @@ async def handler(job: dict) -> dict:
     except Exception as exc:  # noqa: BLE001
         # Top-level `error` key tells RunPod to mark this job FAILED.
         # Keep `ok=false` and the structured details so clients see context.
-        logger.error(
+        _logging.error(
             "job failed",
-            extra={
-                "error_type": type(exc).__name__,
-                "error_message": str(exc),
-                "phase_ms": phase_ms,
-            },
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+            phase_ms=phase_ms,
         )
         return {
             "error": f"{type(exc).__name__}: {exc}",
