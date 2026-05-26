@@ -1,20 +1,33 @@
 """Eager warmup at worker boot.
 
 Moves the ~60-100s vLLM + MinerU cold-start tax from first-request
-latency to worker-boot latency. Worker boot is invisible to the caller;
-the first request is not. So callers see a near-warm cold start (~6s
-parse) instead of ~110s.
+latency to worker-boot latency. The first user request then lands on
+a fully warm engine and finishes in ~6 s parse time.
+
+The payoff compounds, but only on hosts the worker has visited
+before. FlashBoot is process-snapshot based and **per (host,
+image-SHA)** — confirmed empirically 2026-05-26 with a 4-request
+investigation (see guides/troubleshooting.mdx "FlashBoot mechanism").
+First visit to a host: warmup runs in full (~110 s). Subsequent
+scale-from-zeroes that RunPod schedules onto that same host:
+snapshot restore in ~7-8 s. New host: warmup re-runs once.
+
+Either way the per-request cold tax is gone — the first user
+request always lands on a warm engine. The variable is whether the
+*worker boot* paid 110 s or 7 s, which is invisible to the caller's
+wall-clock on a snapshot-restored boot.
 
 **Critical asyncio invariant.** vLLM's `AsyncLLMEngine` creates IPC
 primitives (transports, queues) bound to the asyncio loop that owned
 the warmup call. If that loop is torn down (e.g., via `asyncio.run()`
-returning) and a different loop later tries to talk to the engine, the
-parent's view of the engine subprocess is dead even though the
-subprocess is still running. Symptom: `EngineDeadError` ~75ms into the
-first real request.
+returning) and a different loop later tries to talk to the engine,
+the parent's view of the engine subprocess is dead even though the
+subprocess is still running. Symptom: `EngineDeadError` ~75ms into
+the first real request.
 
-To avoid this, production callers MUST use ``warmup_async()`` from
-inside the same asyncio loop that will later serve requests. The
+Production callers MUST use ``warmup_async()`` from inside the same
+asyncio loop that will later serve requests (see
+``handler._bootstrap_main()`` for the composition pattern). The
 synchronous ``warmup()`` wrapper exists only for tests / local debug
 where a fresh loop per call is fine because tests mock the engine.
 
@@ -23,11 +36,11 @@ requests (just slowly on the first one, falling back to lazy load).
 This is deliberate: a broken warmup must NOT prevent the worker from
 booting and serving traffic.
 
-Logging here uses plain ``print()`` instead of ``worker.logging`` —
-warmup status needs to be visible regardless of how the JSON-logger
-visibility investigation resolves. ``[mineru-warmup]`` prefix matches
-the same channel as RunPod's own ``Started.`` / ``Finished.`` lines
-which we know reaches the dashboard.
+Logging here uses plain ``print()`` with a ``[mineru-warmup]`` prefix.
+This pre-dates the structured JSON logger being loaded, runs in a
+distinct lifecycle phase (pre-``serverless.start()``), and remains
+visually distinct in RunPod's log viewer from the per-request JSON
+records. No need to change it.
 """
 
 from __future__ import annotations

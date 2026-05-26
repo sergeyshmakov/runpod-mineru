@@ -117,16 +117,18 @@ CUDA error (...flash-attention/hopper/flash_fwd_launch_template.h:188): invalid 
 
 **Cause**: RunPod tears down the worker after `idle_timeout` seconds of inactivity. The next request spins a fresh worker — the cost is unpacking the image, loading the model into VRAM, and (for the VLM backend) JIT-compiling vLLM kernels.
 
-**Expected magnitudes** (measured on RTX A5000, first VLM call on a freshly-spun worker):
+**Expected magnitudes** (measured on RTX A5000):
 
 | Scenario | First-job latency |
 |---|---|
 | Warm worker, VLM, on A100 (per MinerU upstream) | ~0.5 s/page (2.12 fps) |
 | Warm worker, VLM, on A5000 24 GB (our measurement) | ~1 s/page (uniform reports) – ~10 s/page (dense forms) |
 | Warm worker, pipeline (any GPU ≥ 4 GB) | ~3–5 s/page |
-| FlashBoot snapshot restore | ~30–60 s for the first job (RunPod's documented FlashBoot benefit) |
-| Cold worker, no FlashBoot, first VLM call | ~90–130 s for the first job (model load + vLLM warmup) |
-| Cold worker, no FlashBoot, first pipeline call | ~10–15 s for the first job (lighter; no vLLM warmup) |
+| **FlashBoot happy path — host reuse, snapshot restored** | **~7–8 s wall-clock** — model + engine restored from snapshot |
+| **FlashBoot cold path — new host, image cached** | **~110 s** — fresh boot, warmup runs (1× per host) |
+| Cold worker, no warmup (`MINERU_SKIP_WARMUP=1`) | ~110–130 s **per request** after every scale-from-zero (no per-host amortization) |
+| Cold worker, pipeline backend, no warmup | ~10–15 s per request (lighter; no vLLM warmup) |
+| Brand-new worker host (no image cached) | +3–5 min for the initial image pull, on top of whichever path above applies |
 
 ### Per-phase cold-start breakdown (VLM, A5000 24 GB)
 
@@ -167,7 +169,48 @@ Headline observations from this run:
   - `MINERU_WARMUP_LANG` (default `en`) — only meaningful for the pipeline backend; VLM ignores it.
   - `MINERU_SKIP_WARMUP=1` — bypass entirely (worker falls back to lazy load on first request, ~100s tax).
 
-  **Expected post-warmup cold-start latency for the *first request*:** TBD pending live measurement. The cold-start delta vs. lazy-load baseline determines whether FlashBoot is process-snapshot based (→ near-zero per-request cold start) or image-cache-only (→ still ~6s first request because warmup didn't survive the snapshot).
+  **Expected post-warmup cold-start latency for the *first request*: ~7–8 s wall-clock on A5000** (measured 2026-05-26 against the deployed template). Breakdown: ~3 s of FlashBoot snapshot restore + ~5 s of parse on a fully-warm engine. **FlashBoot empirically captures Python process memory + CUDA VRAM + the vLLM engine subprocess** — see [FlashBoot mechanism](#flashboot-mechanism-confirmed) below for the full analysis.
+
+### FlashBoot mechanism (confirmed)
+
+We confirmed on 2026-05-26 that **FlashBoot is process-snapshot based** (CRIU or functional equivalent), and that snapshots are scoped **per (host, image-SHA)** — not per endpoint. Each worker host maintains its own snapshot store. When RunPod's scheduler picks a host that has run this image before, you get a fast restore. When it picks a new host, the worker re-runs warmup once.
+
+The four-request investigation that pinned this down. Same short single-page PDF, same parameters every time, worker scaled to zero between every request:
+
+| # | Wall-clock | Host | Snapshot? | What the worker log showed |
+|---|---:|---|---|---|
+| 1 | 456 s | A (post-rebuild, fresh image pull) | none | Full cold path: image pull → fitness checks → `[mineru-warmup] done in 101.0s` → parse 5.6 s |
+| 2 | **7.6 s** | A (same as R1) | yes (post-R1) | Zero boot logs. Went straight from `Jobs in queue: 1` to `"starting job"`. No `[mineru-warmup]` line. |
+| 3 | 122 s | B (different host) | none | Image cached on B, but fresh process: fitness checks + `[mineru-warmup] done in 101.5s` + parse 5.6 s |
+| 4 | **7.4 s** | B (same as R3) | yes (post-R3) | Same pattern as R2 — snapshot restore, no boot logs |
+
+Worker identity is visible in the logs three ways: the `EngineCore_DP0 pid=NNN` line (different per container), the `distributed_init_method=tcp://192.168.X.X` pod-internal IP, and the request-id `-u1` / `-u2` suffix (RunPod's region/partition identifier). All three agreed: R1+R2 were the same pod; R3+R4 were a different same pod.
+
+**The per-host model:**
+
+```
+FlashBoot lookup = (worker host, image SHA)
+- match → restore snapshot in ~3 s, parse in ~5 s → ~7-8 s wall-clock
+- no match → fresh boot, run fitness checks + warmup → ~110 s wall-clock
+```
+
+What gets preserved on a successful restore: Python interpreter state, MinerU's in-memory engine handle, vLLM's `AsyncLLMEngine` subprocess (PID persists), CUDA VRAM (model weights + KV cache + CUDA graphs), `torch.compile` cache, and the boot-time signal handlers.
+
+**Practical implications:**
+
+- The boot-time warmup pays off **per host that the worker visits**, not once per endpoint or once forever. Each new host pays the warmup tax once; every subsequent restore on that same host is fast.
+- Snapshot invalidation: the obvious triggers are image rebuild (new SHA), `MINERU_SKIP_WARMUP=1`, and presumably eventual eviction after long idle. RunPod doesn't document the eviction policy.
+- Either way, **the per-request cold tax is gone** — even the slow case (~110 s) is the *worker boot* paying it once, not every request paying it.
+
+**What controls which path you'll see:**
+
+| Scenario | Likely outcome |
+|---|---|
+| `workers_min ≥ 1` | Worker stays on its host — every request is on a fully warm worker (~5 s parse, no cold start at all) |
+| High-frequency endpoint, workers scale up and down fast | Same hosts get re-selected — most cold starts are happy-path restores (~7 s) |
+| Quiet endpoint, infrequent requests, long idle gaps | RunPod's scheduler may pick a different host — some cold starts will be on new hosts (~110 s) |
+| First request after a rebuild | Always cold path — every endpoint's first request after a fresh image pays ~5-7 min (image pull) + ~110 s (warmup). One-time cost per worker host. |
+| `MINERU_SKIP_WARMUP=1` | Every cold start is ~110-130 s; no per-host amortization. Don't do this in production. |
 
 ## CUDA out of memory
 

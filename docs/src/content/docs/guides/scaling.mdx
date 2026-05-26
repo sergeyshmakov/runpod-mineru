@@ -63,18 +63,39 @@ request lands on a fresh worker (with a cold-start cost; pair with
 
 ## FlashBoot
 
-RunPod's FlashBoot feature snapshots the worker container so the next
-cold start skips the slow parts. Enable it on the endpoint config
-(default on for templates deployed from the Hub).
+RunPod's FlashBoot is a CRIU-style process-snapshot mechanism that
+captures the worker's full state (Python interpreter, GPU VRAM,
+subprocess tree) when the worker scales to zero and restores it on
+the next scale-from-zero. Enable it in the endpoint config (default
+on for Hub-deployed templates).
 
-The MinerU model is loaded at worker boot, before FlashBoot snapshots
-the container — so a FlashBoot-enabled endpoint avoids the ~60-90s
-model-load tax on every cold start. Without FlashBoot, expect 90-130s
-cold-start latency for the VLM backend.
+The boot-time warmup loads the MinerU model into VRAM before
+`serverless.start()` runs, so FlashBoot captures a post-warmup
+snapshot. A snapshot-restored cold start is ~7-8 s wall-clock
+instead of the ~110 s a fresh boot would take.
 
-If your cold starts are still slow with FlashBoot on, check the worker
-logs — the `warmup` log line should appear during boot. If it doesn't,
-the image may have been built without the warmup step.
+**Snapshots are per (worker host, image SHA), not per endpoint.**
+First time the worker lands on a new host, it pays the full ~110 s
+warmup once and that host then has a snapshot. Subsequent scale-from-
+zeroes that RunPod schedules onto the same host get the fast restore.
+A scale-from-zero onto a *different* host re-runs warmup (~110 s,
+once). See [Troubleshooting → FlashBoot mechanism](/mineru-runpod/guides/troubleshooting/#flashboot-mechanism-confirmed)
+for the four-request investigation that pinned down this behavior.
+
+Practical operator math: on endpoints with high enough traffic that
+the same hosts keep getting re-selected, you'll see almost all
+~7-8 s cold starts. On quiet endpoints with long idle gaps, expect
+a mix — RunPod's scheduler may bounce between hosts and you'll see
+some ~110 s starts before each host warms up.
+
+If FlashBoot is off, every cold start runs the ~110 s warmup, with
+no per-host amortization at all. Keep it on unless you have a
+specific reason to disable it.
+
+To bypass the warmup entirely (e.g., for debugging cold-start
+ordering), set `MINERU_SKIP_WARMUP=1` on the endpoint. The worker
+will fall back to lazy load, paying ~110-130 s on every cold start
+regardless of host history.
 
 ## MinerU performance knobs
 
