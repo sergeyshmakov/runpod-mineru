@@ -1,7 +1,7 @@
 # Backlog: Blackwell GPU support for the VLM backend
 
 **Status**: Blocked on MinerU upstream
-**Last verified**: 2026-05-26 against MinerU 3.1.15 + vLLM v0.11.2
+**Last verified**: 2026-05-27 against MinerU 3.2.0 + vLLM v0.11.2
 **Symptom**: Worker crashes at VLM model init on any Blackwell-architecture card (compute capability 12.0). The pipeline backend is unaffected.
 
 ## What's blocked
@@ -16,7 +16,7 @@ Pipeline backend (`backend: "pipeline"`) doesn't use xformers/flash-attn and run
 
 ```
 compute_capability: 12.0 >= 8.0
-INFO Starting to load model .../MinerU2.5-Pro-2604-1.2B/...
+INFO Starting to load model .../MinerU2.5-Pro-2605-1.2B/...
 INFO Model loading took 2.16 GiB and 0.36 seconds
 CUDA error (.../flash-attention/hopper/flash_fwd_launch_template.h:188): invalid argument
 ```
@@ -25,7 +25,7 @@ Root cause: xformers/flash-attention in vLLM v0.11.2 ships kernels for Ampere (8
 
 ## Why we can't just bump vLLM
 
-MinerU 3.1.x's `pyproject.toml`:
+MinerU 3.2.x's `pyproject.toml`:
 
 ```toml
 vllm = ["vllm>=0.10.1.1,<0.12"]
@@ -33,9 +33,9 @@ vllm = ["vllm>=0.10.1.1,<0.12"]
 
 The first vLLM version with any Blackwell mention in release notes is **v0.13.0** (released 2025-12-19, SM103/GB300 Blackwell Ultra). Broader SM120 coverage lands in later releases (v0.14+). All Blackwell-aware vLLM versions are above MinerU's `<0.12` ceiling.
 
-Verified 2026-05-26:
-- MinerU PyPI 3.1.15 → still `vllm<0.12`
-- MinerU GitHub main → same constraint
+Verified 2026-05-27 against the `mineru-3.2.0-released` tag:
+- MinerU 3.2.0 → still `vllm>=0.10.1.1,<0.12` (unchanged from 3.1.x)
+- The 3.1→3.2 bump shipped a new VLM default (`Pro-2604` → `Pro-2605`) but did NOT loosen the vLLM ceiling
 - Latest in-range vLLM: v0.11.2 (released 2025-11-20)
 - No SM120 kernels in v0.11.x release notes; only SM100 (data-center Blackwell) MoE prep
 
@@ -61,7 +61,3 @@ Either:
 - Use a non-Blackwell pool (`ADA_24`, `AMPERE_24`, `AMPERE_48` — our defaults)
 
 Already documented in [docs/src/content/docs/guides/troubleshooting.mdx](../docs/src/content/docs/guides/troubleshooting.mdx) under "VLM backend crashes on Blackwell GPUs".
-
-## Note on the public docs
-
-The Blackwell crash section in the public troubleshooting guide previously cited "first vllm version with Blackwell support is v0.20.0" — that's off. Correct number is v0.13.0 per release-notes evidence above. Worth fixing on the next docs pass.
