@@ -26,7 +26,7 @@ Axiom ingests OTLP/HTTP directly, charges per event rather than per host, and ha
 
 Three concrete reasons it fits this workload:
 
-- **OTLP-native ingest.** No collector to run inside the container, no daemonset, no Fluentbit config. The mineru-runpod worker calls `https://api.axiom.co/v1/logs` directly via the OpenTelemetry Python SDK. The serverless model rules out anything that needs a long-running sidecar, so "the exporter IS the integration" is the only model that works.
+- **OTLP-native ingest.** No collector to run inside the container, no daemonset, no Fluentbit config. The mineru-runpod worker calls Axiom's regional edge endpoint (`https://eu-central-1.aws.edge.axiom.co/v1/logs` or the US variant) directly via the OpenTelemetry Python SDK. The serverless model rules out anything that needs a long-running sidecar, so "the exporter IS the integration" is the only model that works.
 - **Per-event pricing instead of per-host.** A worker serving 500 PDFs a day emits roughly 5,000 log records and 2,500 spans. That fits comfortably inside Axiom's free 0.5 GB/month tier. Per-host pricing models (the Datadog and NewRelic shape) penalize the ephemeral-worker pattern.
 - **APL reads like SPL.** Axiom Processing Language sits between Splunk SPL and KQL ergonomically. Filter by attribute, group by backend, drill into a span: the queries you actually run during an incident are easy in APL. No tutorial needed if you've used either.
 
@@ -48,7 +48,7 @@ In the Axiom UI, go to **Settings → API tokens → Generate new token**. Use a
 
 Treat the token like any production secret: paste it only into RunPod's **Environment Variables** UI (which encrypts at rest), never check it into git, and rotate when employees with access leave.
 
-If your Axiom workspace is in the EU region, your token works against `https://api.eu.axiom.co` instead of the US default. Same format, different base URL — keep track of which region the token belongs to.
+If your Axiom workspace is in the EU region, the management API lives at `https://api.eu.axiom.co` (US is `https://api.axiom.co`). This is the host you query for token CRUD and REST queries, **not** the OTLP ingest URL — that's a separate edge-deployment hostname documented in the env-var section below.
 
 ## What environment variables ship RunPod worker telemetry to Axiom?
 
@@ -57,11 +57,18 @@ Set four environment variables on your RunPod endpoint. `OTEL_EXPORTER_OTLP_HEAD
 Paste this into your endpoint's **Environment Variables** section in the RunPod dashboard, substituting your token and dataset names:
 
 ```sh
-OTEL_EXPORTER_OTLP_ENDPOINT=https://api.axiom.co
+OTEL_EXPORTER_OTLP_ENDPOINT=https://eu-central-1.aws.edge.axiom.co
 OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer xaat-YOUR-TOKEN,x-axiom-dataset=mineru-events
 OTEL_EXPORTER_OTLP_METRICS_HEADERS=Authorization=Bearer xaat-YOUR-TOKEN,x-axiom-metrics-dataset=mineru-metrics
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 ```
+
+> **The endpoint URL is your Axiom edge deployment, NOT `api.axiom.co` / `api.eu.axiom.co`.** This is the single biggest gotcha and the one that cost me hours when I first set this up. The `api.*` hosts are for management API (token creation, queries via REST). OTLP ingest goes to your workspace's *edge deployment* hostname. As of writing, the two are:
+>
+> - **US East 1:** `https://us-east-1.aws.edge.axiom.co`
+> - **EU Central 1:** `https://eu-central-1.aws.edge.axiom.co`
+>
+> Use the one that matches the region you picked when creating the Axiom workspace. The current full list lives at [Axiom's edge deployments doc](https://axiom.co/docs/reference/edge-deployments). If you send OTLP to `api.{eu.}axiom.co`, Axiom returns `400 mismatched region` or `403 forbidden` depending on path — the OTel SDK logs only the HTTP status code, so you'll see `Failed to export ... code: 400` (or 403) with no clue why. Axiom support flagged this for me after I'd been chasing 403s for an hour against the wrong host.
 
 How the SDK routes each signal:
 
@@ -70,11 +77,9 @@ How the SDK routes each signal:
 
 **The dataset names in the two `*-dataset` headers must exactly match the names you created in step 1, and your API token must have ingest scope on both.** This is the #1 source of "everything is configured but nothing shows up" — `mineru-events` and `mineru-metrics` above are example names, not magic strings. If you named your datasets differently, update the headers to match. Mismatches surface as `404 Not Found` (wrong dataset name) or `403 Forbidden` (token lacks ingest scope on that dataset). Both fail silently from the caller's side; the only signal is in the worker's stdout, where the OTel SDK logs each retry with the HTTP status code.
 
-Four details that trip people up:
+Three details that trip people up:
 
-**Region matters — use the right base URL.** Your workspace is in either the US region (`https://api.axiom.co`) or the EU region (`https://api.eu.axiom.co`). Check yours in the Axiom UI: **Settings → General** shows the workspace region. Using the wrong region for your workspace makes Axiom return `HTTP 400 {"code":400,"message":"mismatched region"}` on every export — and the OTel SDK logs only the HTTP code, not the message, so you'll just see endless `Failed to export ... code: 400` in the worker stdout with no clue why. This caught me on my own workspace and cost an hour of debugging.
-
-**Base URL, not the full path.** Set the endpoint to the region root (`https://api.axiom.co` or `https://api.eu.axiom.co`), not `https://api.axiom.co/v1/traces`. The [OpenTelemetry Python SDK](https://opentelemetry-python.readthedocs.io/en/latest/exporter/otlp/otlp.html) appends `/v1/traces`, `/v1/logs`, `/v1/metrics` per signal automatically. If you set the full path, the SDK double-appends and Axiom returns 404.
+**Base URL, not the full path.** Set the endpoint to the edge-deployment root, e.g. `https://eu-central-1.aws.edge.axiom.co`, NOT `https://eu-central-1.aws.edge.axiom.co/v1/traces`. The [OpenTelemetry Python SDK](https://opentelemetry-python.readthedocs.io/en/latest/exporter/otlp/otlp.html) appends `/v1/traces`, `/v1/logs`, `/v1/metrics` per signal automatically. If you set the full path, the SDK double-appends and Axiom returns 404.
 
 **Header case differs by signal.** Events ingest uses `x-axiom-dataset`. Metrics ingest uses `x-axiom-metrics-dataset` (different header name, with `-metrics-` in it). Copying the events headers into `OTEL_EXPORTER_OTLP_METRICS_HEADERS` as-is sends metrics to the events dataset and Axiom's metrics view stays empty.
 
@@ -96,7 +101,8 @@ If **nothing arrives in any view**, open the worker's stdout (RunPod dashboard �
 
 - `Failed to export ... code: 404, reason: Not Found` — the dataset name in one of the `*-dataset` headers doesn't exist in your Axiom workspace. Rename the dataset or update the env var so they match.
 - `Failed to export ... code: 403, reason: Forbidden` — the dataset exists but your API token doesn't have ingest scope on it. Open the token in **Settings → API tokens**, add Ingest scope on the dataset, and update the secret in RunPod.
-- `Failed to export ... code: 400, reason: Bad Request` — the dataset resolves and auth works, but the payload is being rejected. **The #1 cause is region mismatch**: your workspace is in the EU but `OTEL_EXPORTER_OTLP_ENDPOINT` points at `https://api.axiom.co` (or vice versa). The SDK eats the response body so the worker stdout doesn't show *why* — confirm by running `curl -v POST https://api.axiom.co/v1/traces -H "Authorization: Bearer xaat-..." -H "x-axiom-dataset: <yours>" -H "Content-Type: application/x-protobuf" --data-binary "x"` against your endpoint; Axiom's response body will literally say `mismatched region` if that's the cause. Other 400 causes: wrong header name on metrics (use `x-axiom-metrics-dataset`, not `x-axiom-dataset`), or the dataset was created of the wrong type for the signal.
+- `Failed to export ... code: 403, reason: Forbidden` — **the #1 cause is using `api.axiom.co` or `api.eu.axiom.co` as the endpoint instead of the edge-deployment URL.** Confirm by running `curl -v POST https://api.eu.axiom.co/v1/traces -H "Authorization: Bearer xaat-..." -H "x-axiom-dataset: <yours>" -H "Content-Type: application/x-protobuf" --data-binary ""` against your endpoint — if you get 403 there but 422 against `https://eu-central-1.aws.edge.axiom.co/v1/traces` (or the US edge variant), the URL is the issue. Other 403 causes: token genuinely lacks Ingest scope on the dataset.
+- `Failed to export ... code: 400, reason: Bad Request` — the dataset resolves and auth works, but the payload is being rejected. Causes: region mismatch (workspace is EU but you're hitting `us-east-1.aws.edge.axiom.co`, or vice versa — Axiom returns `mismatched region` in the body), wrong header name on metrics (use `x-axiom-metrics-dataset`, not `x-axiom-dataset`), or the dataset was created of the wrong type for the signal.
 - `Failed to export ... code: 401, reason: Unauthorized` — the API token is wrong or expired. Generate a fresh token in **Settings → API tokens** and update the env var.
 - No `Failed to export` lines AND no `[mineru-telemetry] init failed` either — `OTEL_EXPORTER_OTLP_ENDPOINT` is empty or the worker hasn't cold-started since you set it. RunPod env-var changes only take effect on the next cold start; warm workers keep the previous values.
 
@@ -162,7 +168,7 @@ Three real limitations: Axiom's free tier caps ingest at 0.5 GB/month and 30-day
 
 ### Does Axiom support OpenTelemetry natively?
 
-Yes. Axiom ingests OTLP/HTTP traces, logs, and metrics on `/v1/traces`, `/v1/logs`, `/v1/metrics` paths under `https://api.axiom.co` (US) or `https://api.eu.axiom.co` (EU). The OpenTelemetry Python SDK in the mineru-runpod worker speaks this directly with no Collector or agent in between. See [Axiom's OpenTelemetry docs](https://axiom.co/docs/send-data/opentelemetry) for the full list of supported signals and headers.
+Yes. Axiom ingests OTLP/HTTP traces, logs, and metrics on `/v1/traces`, `/v1/logs`, `/v1/metrics` paths — but **the base hostname is your region's edge deployment**, not `api.axiom.co`. The two as of writing are `https://us-east-1.aws.edge.axiom.co` and `https://eu-central-1.aws.edge.axiom.co` (full list at [Axiom's edge deployments doc](https://axiom.co/docs/reference/edge-deployments)). The OpenTelemetry Python SDK in the mineru-runpod worker speaks this directly with no Collector or agent in between. See [Axiom's OpenTelemetry docs](https://axiom.co/docs/send-data/opentelemetry) for the full list of supported signals and headers.
 
 ### Why aren't my metrics showing up in Axiom?
 
@@ -179,6 +185,10 @@ Yes — that's the standard setup. Axiom exposes only two dataset types in the U
 ### How much does OTLP/HTTP export add to cold start time?
 
 200–500 ms on the first-ever cold start of a worker on a host. That's one-time SDK init and DNS resolution for the OTLP endpoint. Subsequent FlashBoot snapshot restores on the same host pay zero overhead — the initialized SDK is captured in the process snapshot. On a baseline 110 s cold start (vLLM + model load + warmup), the OTel cost is invisible.
+
+### Why isn't `api.axiom.co` the OTLP endpoint?
+
+Because Axiom splits two concerns onto two hostnames: `api.{eu.}axiom.co` is the management API (token CRUD, REST queries, dashboards), while OTLP ingest goes to the *edge deployment* hostname for your workspace's region. The split isn't obvious from the OpenTelemetry side because most other backends expose ingest on the same hostname as the management API. Axiom's own [OpenTelemetry guide](https://axiom.co/docs/send-data/opentelemetry) and [edge deployments doc](https://axiom.co/docs/reference/edge-deployments) document the edge URLs, but it's easy to miss if you start from a generic OTel tutorial.
 
 ### Does enabling OpenTelemetry require an OpenTelemetry Collector?
 

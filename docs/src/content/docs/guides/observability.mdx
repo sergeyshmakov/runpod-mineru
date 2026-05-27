@@ -74,7 +74,7 @@ without it, the SDK is never initialized.
 
 | Env var | Purpose |
 |---|---|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Base URL of your OTLP/HTTP backend. The SDK appends `/v1/traces`, `/v1/logs`, `/v1/metrics` per signal — do not append them yourself. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Base URL of your OTLP/HTTP backend. The SDK appends `/v1/traces`, `/v1/logs`, `/v1/metrics` per signal — do not append them yourself. Some vendors split management API and ingest onto different hostnames (Axiom is the obvious example: their ingest URL is the regional edge deployment, not `api.axiom.co`) — check your vendor's OpenTelemetry doc, not their generic API doc, for the correct ingest hostname. |
 | `OTEL_EXPORTER_OTLP_HEADERS` | CSV of `key=value` headers sent with every export (auth tokens, dataset IDs, etc.). |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` (default) or `http/json`. Some backends require protobuf — see the per-vendor notes. |
 | `OTEL_SERVICE_NAME` | Override the default `mineru-runpod` service name (useful when you run multiple endpoints into the same backend). |
